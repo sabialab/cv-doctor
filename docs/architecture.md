@@ -11,7 +11,50 @@
 CV-Doctor 是 **Web 优先的简历手术台**：用户上传简历（DOCX）并粘贴岗位 JD，系统返回可审阅的匹配诊断与有限条数的修改建议（diff），用户逐条接受/拒绝/编辑后导出 DOCX。
 
 **不是：** 简历生成器、通用润色工具、ATS 刷分器、自动投递平台。  
-**是：** 有证据链、有风险提示、不编造经历的岗位匹配修改助手。
+**是：** 有证据链、有风险提示、不编造经历的岗位匹配助手。
+
+**实现态说明（2026-06）：** 主分支 P0 可能仍为 **stub 诊断**（`server/src/services/stub_pipeline.py` + 内存 `SessionStore`），会话终态为 `ready` / `failed`；完整 DOCX/LLM 管线与 Cloudflare 部署见下文「目标架构」。
+
+---
+
+## 1.5 文档与 Agent 规范索引
+
+人类与 AI 协作时，按下列优先级读文档，避免把路线图当成已实现能力。
+
+### 权威顺序
+
+| 优先级 | 路径 | 读者 | 内容 |
+|--------|------|------|------|
+| 1 | [../CLAUDE.md](../CLAUDE.md) | Claude Code、本仓库默认 Agent | **最高标准**：Karpathy 行为准则、P0 实情、验证命令、PR/review |
+| 2 | [../AGENTS.md](../AGENTS.md) | Codex、Copilot、其他工具 | 摘要；与 `CLAUDE.md` 冲突时以 `CLAUDE.md` 为准 |
+| 3 | [../.cursor/rules/`](../.cursor/rules/) | Cursor IDE | 按 glob 自动注入（核心域、server、web、worker、信任边界） |
+| 4 | [../CURSOR.md](../CURSOR.md) | Cursor 用户 | 如何在 Cursor 中启用上述规则 |
+| 5 | [../skills/karpathy-guidelines/SKILL.md](../skills/karpathy-guidelines/SKILL.md) | 可选全局技能 | 可复制到 `~/.cursor/skills/`，非 CV-Doctor 专属 |
+
+### 产品 / 架构文档（本目录）
+
+| 文档 | 何时读 |
+|------|--------|
+| 本文 `architecture.md` | 理解逻辑架构、Pipeline、信任模型、部署单元 |
+| [p0-mvp-implementation.md](./p0-mvp-implementation.md) | P0 范围、API、验收、里程碑 |
+| [p0-cloudflare-stack.md](./p0-cloudflare-stack.md) | **目标**全栈 Cloudflare 部署（Pages / Worker / D1 / R2 / Container） |
+| [mvp-feasibility.md](./mvp-feasibility.md) | 范围边界与风险 |
+| [contributing.md](./contributing.md) | 人类贡献者：分支、提交、CI、PR 前检查 |
+
+### 代码真源（与文档对照）
+
+| Concern | 当前 P0（实现） | 长期 / 完整管线 |
+|---------|----------------|-----------------|
+| API 契约 | `server/src/api/schemas.py`、`p0_models.py` | 同左 + 与 `models.py` 对齐 |
+| 领域与策略 | `server/src/models.py`（`PolicyGuard` 等） | Pipeline 各 stage 消费 |
+| 会话存储 | `server/src/services/session_store.py` | D1 + R2（见 Cloudflare 文档） |
+| 诊断生成 | `server/src/services/stub_pipeline.py` | Container + LiteLLM 多步 Pipeline |
+| 边缘 API | `worker/`（可选） | 生产 Worker 代理 |
+| 前端 | `web/lib/api.ts` | 与 API 状态枚举一致 |
+
+### PR 与自动化审查
+
+合并前流程见 [CLAUDE.md §5](../CLAUDE.md#5-pr-与-review-规则)：GitHub Actions（`server` / `web` / `worker`）、`@copilot review`、`@codex review`、CodeRabbit `cr review`（若已安装）。
 
 ---
 
@@ -118,7 +161,7 @@ cv-doctor/
 | 方法 | 路径 | 职责 |
 |------|------|------|
 | `POST` | `/api/v1/sessions` | 创建会话：`multipart` resume + `jd_text` |
-| `GET` | `/api/v1/sessions/{id}` | `pending` / `processing` / `done` / `failed` + 结果 |
+| `GET` | `/api/v1/sessions/{id}` | `pending` / `processing` / `ready` / `failed` + 结果 |
 | `PATCH` | `/api/v1/sessions/{id}/changes` | 更新每条 `Change`：`accepted` / `rejected` / `edited` |
 | `POST` | `/api/v1/sessions/{id}/export` | 返回 DOCX 字节流 |
 | `DELETE` | `/api/v1/sessions/{id}` | 删除会话与文件 |
@@ -158,18 +201,13 @@ SessionCreate(resume_file, jd_text)
 
 ## 7. 领域模型（代码真源）
 
-核心类型定义在 [`server/src/models.py`](../server/src/models.py)：
+| 模块 | 路径 | 职责 |
+|------|------|------|
+| 长期域模型 | [`server/src/models.py`](../server/src/models.py) | `PolicyGuard`、`Change`（含 `evidence_ids`）、`EvidenceStore`、`MatchScore` 等 |
+| P0 API / 诊断载荷 | [`server/src/p0_models.py`](../server/src/p0_models.py) | `DiagnosisResult`、`JDInterpretation`、`GapReport`、`ChangeCard`（stub 与完整管线共用形状） |
+| HTTP 契约 | [`server/src/api/schemas.py`](../server/src/api/schemas.py) | 请求/响应 Pydantic 模型 |
 
-| 类型 | 职责 |
-|------|------|
-| `Fact` / `EvidenceStore` | 可引用证据 |
-| `JobRequirement` | JD 条目 + `MatchLevel` |
-| `Change` | 单条修改建议（原文/改文/依据/风险/证据 id） |
-| `PolicyGuard` | 规则 → `ALLOWED` / `NEEDS_CONFIRMATION` / `FORBIDDEN` |
-| `MatchScore` | 加权匹配分（反馈用，非首屏核心） |
-| `GapReport` / `ChangeSet` | 聚合结果 |
-
-**禁止** 在业务逻辑中平行定义一套重复 DTO；API 层只做序列化与裁剪。
+**禁止** 在业务逻辑中平行定义第三套重复 DTO；改 API 时同步 `schemas.py`、`p0_models.py` 与 `web/lib/api.ts`。
 
 ---
 
@@ -268,12 +306,17 @@ web/
 
 ---
 
-## 13. 相关文档
+## 13. 相关文档（速查）
+
+完整索引与读序见上文 **§1.5 文档与 Agent 规范索引**。
 
 | 文档 | 用途 |
 |------|------|
 | [p0-mvp-implementation.md](./p0-mvp-implementation.md) | 任务拆解、里程碑、API 细节 |
+| [p0-cloudflare-stack.md](./p0-cloudflare-stack.md) | 目标 Cloudflare 拓扑与绑定 |
 | [mvp-feasibility.md](./mvp-feasibility.md) | 范围与风险 |
-| [contributing.md](./contributing.md) | 提交规范、Ruff、开发命令 |
-| [PLAN.md](../PLAN.md) | 产品全景 |
-| [CLAUDE.md](../CLAUDE.md) | Agent 行为与项目规则 |
+| [contributing.md](./contributing.md) | 人类贡献：提交、CI、PR |
+| [PLAN.md](../PLAN.md) | 产品全景（非 P0 承诺） |
+| [CLAUDE.md](../CLAUDE.md) | Agent 最高执行标准 |
+| [AGENTS.md](../AGENTS.md) | 跨工具 Agent 摘要 |
+| [CURSOR.md](../CURSOR.md) | Cursor 规则说明 |

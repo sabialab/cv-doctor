@@ -7,43 +7,60 @@ alwaysApply: true
 
 ## Identity
 
-- **Product:** 简历对症下药 — paste JD, get an auditable resume surgery list (not a rewrite bot).
-- **Users:** Chinese white-collar / fresh grads; mobile-first Web.
-- **Locale:** User-facing copy `zh-CN`; technical docs may be English.
+- **Product:** 简历对症下药 — paste JD, get an auditable surgery list (not a rewrite bot).
+- **Users:** Chinese job seekers; mobile-first Web.
+- **Locale:** User-facing copy `zh-CN`; agent/tech docs may be English or bilingual.
 
 ## Doc hierarchy
 
-1. `docs/p0-mvp-implementation.md` — **what to build now**
-2. `PLAN.md` — long-term vision (do not implement P1/P2 unless asked)
-3. `docs/mvp-feasibility.md` — constraints and risks
-4. `server/src/models.py` — domain schema source of truth
+1. `docs/p0-mvp-implementation.md` — product scope & acceptance
+2. `docs/p0-cloudflare-stack.md` — **deploy/runtime** (Cloudflare; D1/R2/Container target)
+3. `PLAN.md` — long-term vision (do not implement P1/P2 unless asked)
+4. `docs/mvp-feasibility.md` — constraints and risks
+5. `server/src/models.py` — `PolicyGuard` and long-term domain types
+6. `server/src/p0_models.py` — **current P0 API / stub diagnosis** shapes
 
 ## P0 user journey (do not reorder result UX)
 
-Upload DOCX resume → paste JD → diagnose → show ≤3 free diff cards → accept/reject → export DOCX.
+Upload resume file + paste JD → create session → poll until `ready` or `failed` → review ≤3 change cards → accept/reject → export.
 
 Result page order:
 
-1. JD plain summary
-2. Matched / partial / missing requirements
-3. Surgery suggestions (with risk)
-4. Match score (secondary)
+1. JD plain summary (`role_summary` / hard / preferred)
+2. Matched / partial / missing requirements (`gap_report`)
+3. Surgery suggestions (diff cards with `risk_level`)
+4. Match score (`match_score`, secondary)
 
-## Explicit non-goals for default implementation
+## Session API (current code)
+
+Statuses: `pending` | `processing` | `ready` | `failed`. Frontend: `web/lib/api.ts`. Do not rename to `done` without coordinated API + tests + docs.
+
+## Implementation reality vs target
+
+| Area | Now (branch) | Target (docs) |
+|------|----------------|---------------|
+| Sessions | In-memory `SessionStore` | D1 + R2 |
+| Diagnosis | `stub_pipeline` | Container + LiteLLM pipeline |
+| Export | `.txt` stub under `STORAGE_PATH/exports` | DOCX via python-docx |
+| Edge API | Optional `worker/` proxy | Worker + Pages production |
+
+## Explicit non-goals for default work
 
 - Resume generation from scratch
 - BOSS/拉勾/猎聘 auto-scrape (P1)
 - 天眼查 / company profile (P1)
-- Kimi K2.6 surgery reports (P1)
-- Paid export / accounts (P2)
-- CLI as primary user interface
+- Kimi surgery reports (P1)
+- Paid export / user accounts (P2)
+- CLI as primary UX
+- Treating all of `server/src/` legacy tree as P0 (CI Ruff is scoped)
 
-## Stack (fixed for P0)
+## Stack
 
-- Backend: FastAPI + LiteLLM + python-docx
-- Frontend: Next.js 15 + Tailwind 4
-- Models: DeepSeek V4 Flash via env config
+- **Dev API:** FastAPI on `:8787` (`server/`)
+- **Edge:** Worker Hono (`worker/`), Node **≥ 22** for Wrangler
+- **Web:** Next.js App Router (`web/`)
+- **Future LLM:** LiteLLM + env secrets (full pipeline, not stub)
 
 ## Cross-references
 
-Full agent instructions: `CLAUDE.md`, `AGENTS.md`. Trust rules: `llm-trust-boundary.mdc`.
+Full standard: `CLAUDE.md` (canonical). Summary: `AGENTS.md`. Trust: `llm-trust-boundary.mdc`.
