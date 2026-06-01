@@ -88,12 +88,14 @@ cv-doctor/
 └── PLAN.md              # 产品路线图
 ```
 
-| 部署单元 | P0 建议 |
-|----------|---------|
-| 前端 | Vercel（或同类静态/Node 托管） |
-| 后端 | 单机 Docker + `uvicorn`，反代 HTTPS |
-| 文件 | 本地 `uploads/{session_id}/`，定时清理 |
-| 密钥 | 环境变量，不入库 |
+| 部署单元 | P0（全 Cloudflare） |
+|----------|-------------------|
+| 前端 | Cloudflare **Pages**（`web/`） |
+| 边缘 API | **Worker**（`worker/`） |
+| 流水线 | **Container**（`server/`） |
+| 存储 | **R2** + **D1** |
+
+详见 [p0-cloudflare-stack.md](./p0-cloudflare-stack.md)。
 
 ---
 

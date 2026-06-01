@@ -1,0 +1,26 @@
+# Workers Paid：边缘 API + 可选 Containers（镜像见 server/Dockerfile）
+
+name = "cv-doctor-api"
+main = "src/index.ts"
+compatibility_date = "2025-06-01"
+compatibility_flags = ["nodejs_compat"]
+
+# 本地开发：将请求代理到 Python（wrangler dev 时设置 PIPELINE_URL）
+[vars]
+ALLOWED_ORIGINS = "http://localhost:3000,http://127.0.0.1:3000"
+PIPELINE_URL = "http://127.0.0.1:8787"
+
+# 生产：取消注释并执行 wrangler d1 create / r2 create
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "cv-doctor-p0"
+# database_id = "<FILL>"
+
+# [[r2_buckets]]
+# binding = "UPLOADS"
+# bucket_name = "cv-doctor-uploads"
+
+# [[containers]]
+# class_name = "PipelineContainer"
+# image = "../server/Dockerfile"
+# max_instances = 4

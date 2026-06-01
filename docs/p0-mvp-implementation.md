@@ -277,7 +277,7 @@ for change in changes:
 | 3.3 | 错误态：解析失败 → 引导粘贴简历全文 | 降级路径 |
 | 3.4 | LLM 超时重试 1 次；失败友好提示 | 稳定性 |
 | 3.5 | 基础限流（IP / session 每日 N 次） | 防刷 API |
-| 3.6 | 部署：前端 Vercel + 后端 VPS/Docker | 公网可访问 |
+| 3.6 | 部署：Cloudflare Pages + Worker + Container + R2/D1 | 公网可访问 |
 | 3.7 | 找 5–10 个种子用户走一遍 + 记录反馈表 | 验证 |
 
 **里程碑 M3：** 对外软上线，开始收集 Go/No-Go 指标。
@@ -316,16 +316,20 @@ for change in changes:
 
 ## 8. 部署方案（P0 最小）
 
+**全 Cloudflare 栈**（见 [p0-cloudflare-stack.md](./p0-cloudflare-stack.md)）：
+
 ```text
-[用户] → Vercel (Next.js)
-         → HTTPS → VPS / 已有服务器
-              → Docker: FastAPI + uvicorn
-              → 卷: ./uploads + cron 清理
-              → 环境变量: DEEPSEEK_API_KEY, AUTO_DELETE_HOURS=24
+[用户] → Cloudflare Pages (Next.js, web/)
+         → Cloudflare Worker (Hono API, worker/)
+              → R2：会话文件
+              → D1：会话元数据
+              → Cloudflare Container：Python 流水线 (server/)
+              → Cron：24h 清理
+              → 密钥：DEEPSEEK_API_KEY（仅 Container/Worker secret）
 ```
 
-- 域名：主域 + `api.` 子域
-- CORS：仅允许前端源
+- 域名：Pages 主域；API 同域 `/api/*` 或 `api.` 子域
+- CORS：仅允许 Pages 源
 - 日志：请求 id + session_id，不记简历正文到日志（隐私）
 
 ---

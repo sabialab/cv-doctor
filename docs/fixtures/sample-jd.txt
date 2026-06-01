@@ -1,0 +1,14 @@
+高级后端工程师
+
+岗位职责：
+- 设计与维护 REST API
+- 参与数据管道建设
+
+任职要求：
+- Python 3 年以上
+- 熟悉 FastAPI 或 Django
+- 熟悉 PostgreSQL
+
+加分项：
+- Kubernetes
+- 云服务（AWS / Cloudflare）经验

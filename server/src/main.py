@@ -1,0 +1,150 @@
+"""P0 FastAPI — 本地开发与 Cloudflare Container 入口。"""
+
+from __future__ import annotations
+
+import os
+from pathlib import Path
+
+from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+
+from src.api.schemas import (
+    ChangePatchRequest,
+    ChangePatchResponse,
+    ExportResponse,
+    PrivacyResponse,
+    SessionCreateResponse,
+    SessionStatusResponse,
+    diagnosis_result_for_api,
+)
+from src.models import ChangeStatus
+from src.services.session_store import create_session, delete_session, get_session, update_session
+from src.services.stub_pipeline import build_stub_diagnosis
+
+app = FastAPI(title="CV Doctor API", version="0.1.0-p0")
+
+_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[o.strip() for o in _origins.split(",") if o.strip()],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+EXPORT_DIR = Path(os.getenv("STORAGE_PATH", "./uploads")) / "exports"
+EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _run_diagnosis(session_id: str) -> None:
+    rec = get_session(session_id)
+    if rec is None:
+        return
+    update_session(session_id, status="processing")
+    try:
+        # P0：桩数据；M4 替换为真实 parse + LLM
+        result = build_stub_diagnosis()
+        update_session(session_id, status="ready", result=result, error=None)
+    except Exception as exc:  # noqa: BLE001 — P0 边界
+        update_session(session_id, status="failed", error=str(exc))
+
+
+@app.get("/health")
+def health() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+@app.post("/sessions", response_model=SessionCreateResponse)
+async def create_session_route(
+    background_tasks: BackgroundTasks,
+    resume: UploadFile = File(...),
+    jd_text: str = Form(""),
+) -> SessionCreateResponse:
+    if not resume.filename or not resume.filename.lower().endswith(".docx"):
+        raise HTTPException(400, detail="仅支持 .docx 简历")
+    if not jd_text.strip():
+        raise HTTPException(400, detail="请粘贴岗位描述")
+
+    data = await resume.read()
+    if len(data) > 10 * 1024 * 1024:
+        raise HTTPException(400, detail="文件超过 10MB")
+
+    record = create_session(resume_bytes=data, jd_text=jd_text.strip())
+    background_tasks.add_task(_run_diagnosis, record.session_id)
+    return SessionCreateResponse(session_id=record.session_id, status=record.status)
+
+
+@app.get("/sessions/{session_id}", response_model=SessionStatusResponse)
+def get_session_route(session_id: str) -> SessionStatusResponse:
+    rec = get_session(session_id)
+    if rec is None:
+        raise HTTPException(404, detail="会话不存在或已过期")
+    api_result = diagnosis_result_for_api(rec.result) if rec.result else None
+    return SessionStatusResponse(
+        session_id=rec.session_id,
+        status=rec.status,
+        result=api_result,
+        error=rec.error,
+    )
+
+
+@app.patch("/sessions/{session_id}/changes/{change_id}", response_model=ChangePatchResponse)
+def patch_change(session_id: str, change_id: str, body: ChangePatchRequest) -> ChangePatchResponse:
+    rec = get_session(session_id)
+    if rec is None or rec.result is None:
+        raise HTTPException(404, detail="会话或结果不可用")
+    for ch in rec.result.changes:
+        if ch.id == change_id:
+            ch.status = body.status
+            return ChangePatchResponse(id=change_id, status=ch.status)
+    raise HTTPException(404, detail="修改项不存在")
+
+
+@app.post("/sessions/{session_id}/export", response_model=ExportResponse)
+def export_session(session_id: str) -> ExportResponse:
+    rec = get_session(session_id)
+    if rec is None or rec.result is None:
+        raise HTTPException(404, detail="会话不可用")
+    accepted = [c for c in rec.result.changes if c.status == ChangeStatus.ACCEPTED]
+    if not accepted:
+        raise HTTPException(400, detail="请先接受至少一条修改建议")
+
+    out = EXPORT_DIR / f"{session_id}.txt"
+    lines = ["# CV Doctor P0 导出（桩）", "", "已采纳修改：", ""]
+    for c in accepted:
+        lines.append(f"## {c.section}")
+        lines.append(f"- 原文：{c.original}")
+        lines.append(f"- 改后：{c.revised}")
+        lines.append("")
+    out.write_text("\n".join(lines), encoding="utf-8")
+    rec.export_path = str(out)
+    return ExportResponse(download_url=f"/sessions/{session_id}/export/download", format="txt")
+
+
+@app.get("/sessions/{session_id}/export/download")
+def download_export(session_id: str):
+    rec = get_session(session_id)
+    if rec is None or not rec.export_path or not Path(rec.export_path).is_file():
+        raise HTTPException(404, detail="导出文件不存在")
+    return FileResponse(
+        rec.export_path,
+        filename="resume-export.txt",
+        media_type="text/plain",
+    )
+
+
+@app.delete("/sessions/{session_id}", response_model=PrivacyResponse)
+def delete_session_route(session_id: str) -> PrivacyResponse:
+    rec = get_session(session_id)
+    if rec is None:
+        raise HTTPException(404, detail="会话不存在")
+    if rec.export_path:
+        Path(rec.export_path).unlink(missing_ok=True)
+    delete_session(session_id)
+    return PrivacyResponse(message="已删除")
+
+
+@app.get("/privacy", response_model=PrivacyResponse)
+def privacy_ack() -> PrivacyResponse:
+    return PrivacyResponse(message="ok")
