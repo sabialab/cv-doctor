@@ -67,6 +67,8 @@ export function DiffCard({
     try {
       await onSaveEdit(ch.id, draft.trim());
       setEditing(false);
+    } catch {
+      // Keep editor open so the user can fix validation/API errors.
     } finally {
       setSaving(false);
     }
@@ -92,6 +94,7 @@ export function DiffCard({
           <textarea
             className="w-full rounded border border-neutral-300 p-2 text-base"
             rows={4}
+            aria-label="编辑改文"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
           />

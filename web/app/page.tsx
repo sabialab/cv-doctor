@@ -79,7 +79,7 @@ export default function HomePage() {
         <Link href="/privacy" className="underline">
           隐私说明
         </Link>
-        。诊断会调用第三方云模型（DeepSeek）；结果页可手动删除本次数据。不用于模型训练。
+        。诊断会调用第三方云模型（DeepSeek）；结果页可手动删除；生产环境默认 24 小时内自动删除（见隐私说明）。不用于模型训练。
       </p>
     </main>
   );

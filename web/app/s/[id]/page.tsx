@@ -110,6 +110,7 @@ export default function SessionPage() {
       await load();
     } catch (e) {
       setActionError(e instanceof Error ? e.message : "保存失败");
+      throw e;
     }
   }
 

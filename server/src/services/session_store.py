@@ -79,12 +79,13 @@ def patch_change(
             if ch.id != change_id:
                 continue
             if revised is not None:
-                if (
-                    PolicyGuard().check_change(ch.model_copy(update={"revised": revised}))
-                    == PolicyAction.FORBIDDEN
-                ):
+                trial = ch.model_copy(update={"revised": revised})
+                action = PolicyGuard().check_change(trial)
+                if action == PolicyAction.FORBIDDEN:
                     return "forbidden"
                 ch.revised = revised
+                if action == PolicyAction.NEEDS_CONFIRMATION:
+                    ch.requires_user_confirmation = True
                 ch.status = ChangeStatus.ACCEPTED
             elif status is not None:
                 ch.status = ChangeStatus(status) if isinstance(status, str) else status

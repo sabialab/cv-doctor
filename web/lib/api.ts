@@ -1,3 +1,5 @@
+import { apiErrorMessage } from "@/lib/apiError";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, "") || "http://127.0.0.1:8787";
 const API_PREFIX = process.env.NEXT_PUBLIC_API_PREFIX || "";
 
@@ -57,7 +59,7 @@ export async function createSession(resume: File, jdText: string): Promise<{ ses
   const res = await fetch(apiUrl("/sessions"), { method: "POST", body: form });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error((err as { detail?: string }).detail || res.statusText);
+    throw new Error(apiErrorMessage(err, res.statusText));
   }
   return res.json();
 }
@@ -91,7 +93,7 @@ export async function patchChange(
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error((err as { detail?: string }).detail || "更新失败");
+    throw new Error(apiErrorMessage(err, "更新失败"));
   }
 }
 
@@ -101,7 +103,7 @@ export async function exportSession(
   const res = await fetch(apiUrl(`/sessions/${sessionId}/export`), { method: "POST" });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error((err as { detail?: string }).detail || "导出失败");
+    throw new Error(apiErrorMessage(err, "导出失败"));
   }
   return res.json();
 }
@@ -114,6 +116,6 @@ export async function deleteSession(sessionId: string): Promise<void> {
   const res = await fetch(apiUrl(`/sessions/${sessionId}`), { method: "DELETE" });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error((err as { detail?: string }).detail || "删除失败");
+    throw new Error(apiErrorMessage(err, "删除失败"));
   }
 }
