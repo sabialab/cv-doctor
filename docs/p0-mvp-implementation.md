@@ -181,7 +181,7 @@ SessionCreate(resume_file, jd_text)
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | `POST` | `/api/v1/sessions` | `multipart`: resume(docx), jd_text；返回 `{ session_id }` |
-| `GET` | `/api/v1/sessions/{id}` | 状态：`pending` / `processing` / `done` / `failed` + 结果 |
+| `GET` | `/api/v1/sessions/{id}` | 状态：`pending` / `processing` / `ready` / `failed` + 结果 |
 | `PATCH` | `/api/v1/sessions/{id}/changes` | 更新每条 change 状态：`accepted`/`rejected`/`edited` |
 | `POST` | `/api/v1/sessions/{id}/export` | 返回 DOCX 文件流 |
 | `DELETE` | `/api/v1/sessions/{id}` | 一键删除会话及文件 |
