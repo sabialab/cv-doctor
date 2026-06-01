@@ -25,12 +25,14 @@ CV-Doctor 是 **Web 优先的简历手术台**：用户上传简历（DOCX）并
 
 | 优先级 | 路径 | 读者 | 内容 |
 |--------|------|------|------|
-| 0 | Superpowers 插件（Cursor） | Cursor Agent | **会话级最高**：先读/调用 Superpowers 技能；见 [CLAUDE.md §0](../CLAUDE.md#0-superpowers-插件--会话级最高优先级)、`.cursor/rules/superpowers.mdc` |
-| 1 | [../CLAUDE.md](../CLAUDE.md) | Claude Code、本仓库默认 Agent | **最高标准**：Superpowers §0、Karpathy 行为准则、P0 实情、验证命令、PR/review |
-| 2 | [../AGENTS.md](../AGENTS.md) | Codex、Copilot、其他工具 | 摘要；与 `CLAUDE.md` 冲突时以 `CLAUDE.md` 为准 |
-| 3 | [`../.cursor/rules/`](../.cursor/rules/) | Cursor IDE | 按 glob / alwaysApply 自动注入（**superpowers**、核心域、server、web、信任边界） |
-| 4 | [../CURSOR.md](../CURSOR.md) | Cursor 用户 | 如何在 Cursor 中启用上述规则 |
-| 5 | [../skills/karpathy-guidelines/SKILL.md](../skills/karpathy-guidelines/SKILL.md) | 可选全局技能 | 可复制到 `~/.cursor/skills/`，非 CV-Doctor 专属 |
+| 0 | [../CLAUDE.md](../CLAUDE.md) §1 | 所有 Agent | **第一优先级**：Karpathy 通用行为准则 |
+| 1 | Superpowers 插件（Cursor） | Cursor Agent | 技能工作流；见 [CLAUDE.md §0](../CLAUDE.md#0-superpowers-插件--会话级最高优先级) |
+| 2 | [../CLAUDE.md](../CLAUDE.md) | Claude Code、本仓库默认 Agent | 完整标准：产品、验证、**§5–7 PR 工作流** |
+| — | `.cursor/rules/pr-workflow.mdc` | Cursor | Squash merge、CodeRabbit、CI、合并发布同步 |
+| 3 | [../AGENTS.md](../AGENTS.md) | Codex、Copilot、其他工具 | 摘要；与 `CLAUDE.md` 冲突时以 `CLAUDE.md` 为准 |
+| 4 | [`../.cursor/rules/`](../.cursor/rules/) | Cursor IDE | alwaysApply：**karpathy**、**pr-workflow**、**superpowers**、核心域、信任边界 |
+| 5 | [../CURSOR.md](../CURSOR.md) | Cursor 用户 | 如何在 Cursor 中启用上述规则 |
+| 6 | [../skills/karpathy-guidelines/SKILL.md](../skills/karpathy-guidelines/SKILL.md) | 可选全局技能 | 可复制到 `~/.cursor/skills/` |
 
 ### 产品 / 架构文档（本目录）
 

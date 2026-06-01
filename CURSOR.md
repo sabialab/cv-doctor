@@ -4,10 +4,11 @@ This repo ships **Cursor project rules** plus optional **global skills** so beha
 
 ## Authority order
 
-0. **Superpowers plugin (Cursor)** — invoke matching skills **before any other action**; see [CLAUDE.md §0](CLAUDE.md#0-superpowers-插件--会话级最高优先级) and `.cursor/rules/superpowers.mdc`
-1. **[`CLAUDE.md`](CLAUDE.md)** — highest standard (Chinese-first; full verify & PR rules)
-2. **[`AGENTS.md`](AGENTS.md)** — cross-tool summary; defers to `CLAUDE.md` on conflict
-3. **`.cursor/rules/*.mdc`** — scoped automation in the IDE
+1. **[`CLAUDE.md`](CLAUDE.md) §1** — **Karpathy 通用行为准则（第一优先级）**
+2. **Superpowers plugin** — skill routing; [§0](CLAUDE.md#0-superpowers-插件--会话级最高优先级) + `superpowers.mdc`
+3. **PR workflow** — `pr-workflow.mdc` + [CLAUDE.md §5–7](CLAUDE.md#6-github-pr-工作流)
+4. **[`AGENTS.md`](AGENTS.md)** — cross-tool summary
+5. **`.cursor/rules/*.mdc`** — scoped automation
 
 ## In this repository
 
@@ -16,8 +17,9 @@ This repo ships **Cursor project rules** plus optional **global skills** so beha
 
 | File | When it applies |
 |------|----------------|
-| `superpowers.mdc` | Always — **Superpowers plugin first** (skills routing) |
-| `karpathy-guidelines.mdc` | Always — Think / Simplicity / Surgical / Verify |
+| `karpathy-guidelines.mdc` | Always — **first priority** (Think / Simplicity / Surgical / Verify) |
+| `pr-workflow.mdc` | Always — PR, squash merge, CodeRabbit, CI, release sync |
+| `superpowers.mdc` | Always — Superpowers skills routing |
 | `cv-doctor-core.mdc` | Always — product, P0 scope, doc hierarchy |
 | `llm-trust-boundary.mdc` | Always — anti-hallucination, PolicyGuard |
 | `server-python.mdc` | Files under `server/**` |
@@ -57,7 +59,8 @@ When creating or updating a PR, follow [`CLAUDE.md` §5](CLAUDE.md#5-pr-与-revi
 | Deploy / CF | `docs/p0-cloudflare-stack.md`, `CLAUDE.md` §2–3 |
 | Trust / PolicyGuard | `llm-trust-boundary.mdc`, `server/src/models.py` |
 | Karpathy principles | `CLAUDE.md` §1, `AGENTS.md`, `karpathy-guidelines.mdc`, `skills/karpathy-guidelines/` |
-| Superpowers routing | `CLAUDE.md` §0, `superpowers.mdc`, `AGENTS.md` rule 0 |
+| Karpathy / PR workflow | `CLAUDE.md` §1 / §5–7, `karpathy-guidelines.mdc`, `pr-workflow.mdc` |
+| Superpowers routing | `CLAUDE.md` §0, `superpowers.mdc` |
 
 ## Upstream reference
 

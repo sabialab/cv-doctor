@@ -71,4 +71,4 @@ Statuses: `pending` | `processing` | `ready` | `failed`. Frontend: `web/lib/api.
 
 ## Cross-references
 
-Full standard: `CLAUDE.md` (canonical). Summary: `AGENTS.md`. Superpowers: `superpowers.mdc`. Trust: `llm-trust-boundary.mdc`.
+Full standard: `CLAUDE.md` (canonical). Karpathy §1 first. PR: `pr-workflow.mdc`. Superpowers: `superpowers.mdc`. Trust: `llm-trust-boundary.mdc`.

@@ -36,8 +36,10 @@ cd worker && npm ci && npm run typecheck
 ## 分支与 PR
 
 - **每个 MVP 小阶段**（见 `p0-mvp-implementation.md`）从 `origin/main` 拉新分支，例如 `feat/p0-phase1-pipeline`。
-- **不要**在已合并进 `main` 的旧 PR 分支上继续下一阶段；应 cherry-pick 仅本阶段提交或重新开分支。
-- 完整规则：[CLAUDE.md §6](../CLAUDE.md#6-git-分支与-mvp-阶段工作流强制)
+- **不要**在已合并进 `main` 的旧 PR 分支上继续下一阶段。
+- **合并**：仅 **Squash and merge**；合并后更新 `README.md`、`CHANGELOG.md`、`web/` 与 `worker/` 的 `package.json` + lockfile、`server/pyproject.toml` 版本号。
+- **PR 前**：`cr review --base main --plain`（P1/P2 须为 0）；**PR 后**：`@copilot review` + `@codex review`，等待 CI。
+- 完整规则：[CLAUDE.md §5–7](../CLAUDE.md#5-git-分支与-mvp-阶段工作流强制)
 
 ## 提交规范
 
@@ -62,4 +64,4 @@ cd worker && npm ci && npm run typecheck
 | [../skills/karpathy-guidelines/SKILL.md](../skills/karpathy-guidelines/SKILL.md) | 可安装到 `~/.cursor/skills` 的通用行为技能 |
 | [../.cursor/rules/](../.cursor/rules/) | Cursor 项目规则（alwaysApply + glob） |
 
-PR 前请阅读 [CLAUDE.md §5](../CLAUDE.md#5-pr-与-review-规则)（`@copilot review`、`@codex review`、CI 绿灯）。
+PR 前请阅读 [CLAUDE.md §5–7](../CLAUDE.md#7-pr-与-review-规则)（CodeRabbit、review 触发、CI、合并发布同步）。

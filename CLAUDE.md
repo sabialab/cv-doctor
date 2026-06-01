@@ -2,11 +2,13 @@
 
 本文件是本仓库的**最高执行标准**。所有 AI coding agent（Claude Code、Codex、Copilot、Cursor 等）在本仓库工作时必须以本文件为准。`AGENTS.md` 是跨工具摘要；与本文件冲突时**以本文件为准**。
 
+**准则优先级（总序）：** **§1 Karpathy 通用行为（第一优先级）** → §0 Superpowers 技能工作流 → §2–3 产品与信任边界 → §5–7 PR / Review / 合并发布。
+
 ---
 
-## 0. Superpowers 插件 — 会话级最高优先级
+## 0. Superpowers 插件 — 技能工作流（在 §1 Karpathy 之后）
 
-> Cursor 中已安装 **Superpowers** 插件时，**无论任务大小、无论是否仅回答问题**，都必须**优先**调用 Superpowers 技能，再执行其他动作。项目规则：`.cursor/rules/superpowers.mdc`（`alwaysApply: true`）。
+> Cursor 中已安装 **Superpowers** 插件时，在遵守 **§1** 的前提下，**无论任务大小**，须按技能路由调用 Superpowers（先读 `using-superpowers`）。项目规则：`.cursor/rules/superpowers.mdc`（`alwaysApply: true`）。
 
 ### 0.1 何时必须调用
 
@@ -26,11 +28,12 @@
 
 ### 0.2 与本文其他章节的关系
 
-- **Superpowers** 规定 *工作方式*（技能、TDD、完成前验证）。
-- **§1 Karpathy** 规定 *代码行为*（简单、精准改动）。
+- **§1 Karpathy** 规定 *通用行为*（第一优先级：思考、简单、精准改动、可验证完成）。
+- **Superpowers** 规定 *技能化工作流*（TDD、调试、完成前验证、review 技能）。
 - **§2–3** 规定 CV-Doctor *产品与信任边界*。
+- **§5–7** 规定 *Git / PR / Review / 合并发布*。
 
-若在**产品安全**（如反幻觉、PolicyGuard）上 Superpowers 技能与 §2–3 冲突，**以 §2–3 为准**。
+若在**产品安全**（反幻觉、PolicyGuard）上与其他章节冲突，**以 §2–3 为准**。
 
 ### 0.3 非 Cursor 环境
 
@@ -38,9 +41,9 @@ Codex / Copilot 等无 Superpowers 插件时：按上表**同等流程**手动�
 
 ---
 
-## 1. 通用行为准则（Andrej Karpathy 风格）— 代码层第一优先级
+## 1. 通用行为准则（Andrej Karpathy 风格）— 第一优先级
 
-> 完整条文见 `.cursor/rules/karpathy-guidelines.mdc` 与 [`skills/karpathy-guidelines/SKILL.md`](skills/karpathy-guidelines/SKILL.md)。上游参考：[multica-ai/andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills)。
+> **所有任务（含文档、PR、review 修复）均须遵守本节。** 完整条文见 `.cursor/rules/karpathy-guidelines.mdc` 与 [`skills/karpathy-guidelines/SKILL.md`](skills/karpathy-guidelines/SKILL.md)。上游：[multica-ai/andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills)。
 
 **Tradeoff:** 准则偏向谨慎与可验证，而非速度。琐碎修改可酌情简化，但仍须遵守领域红线（见第 3 节）。
 
@@ -197,15 +200,46 @@ git diff --check
 
 ---
 
-## 5. PR 与 Review 规则
+## 5. Git 分支与 MVP 阶段工作流（强制）
 
-- 创建 PR 或向 PR 推送修复后，应 push 当前分支并查看 PR checks（本仓库 CI：`server` / `web` / `worker`）
-- 处理 review 时优先看 **未解决** 的 thread，再决定可否采纳；外部 reviewer 不是唯一真相来源
-- **不要** 主动 resolve GitHub review threads，除非用户明确要求
+> **禁止**在「已合并进 `main` 的旧 feature 分支」上继续堆下一阶段工作。否则 PR diff 会重复整段历史、易与 `main` 冲突、review 失真。
 
-### 强制 Review 触发（新 PR 或 push 修复后）
+| 规则 | 说明 |
+|------|------|
+| 基线 | 每个新阶段从 **`git fetch origin && git checkout -b feat/<阶段>-<简述> origin/main`** 开始 |
+| 一 PR 一目标 | 例如：`main` 已含 P0（#1）→ Phase 1 单独分支/PR，只含本阶段增量 |
+| 误在旧分支开发 | `git reset --hard origin/main` 后 **`git cherry-pick`** 仅保留本阶段提交（勿 replay 已在 main 的提交） |
+| 合并后 | 旧分支视为只读；下一阶段**新建**分支名 |
 
-在对应 PR 上请求自动 review（文档与配置变更同样适用）：
+阶段划分见 `docs/p0-mvp-implementation.md`。开工前确认：`git log origin/main..HEAD` 不应重复 main 已有的大块提交。
+
+---
+
+## 6. GitHub PR 工作流
+
+- 修复 PR review 时，先读取 **thread-aware / unresolved** review context，再判断哪些意见 **actionable**
+- 提交或向 PR 推送修复后，**必须等待关键 CI/checks**，在回复中写明通过或失败原因（勿用「应该绿了」）
+- 每次合并 PR 到 `main`，**必须**使用 **Squash and merge**（压缩合并）。**禁止** Merge commit 或 Rebase and merge，保证 `main` 线性、一 PR 一 commit
+- 每次合并到 `main` 后，**必须**同步更新（非可选）：
+  - 根目录 [`README.md`](README.md)
+  - [`CHANGELOG.md`](CHANGELOG.md)（`[Unreleased]` → 新版本条目）
+  - [`web/package.json`](web/package.json) 与 [`web/package-lock.json`](web/package-lock.json) 的 `version`
+  - [`worker/package.json`](worker/package.json) 与 [`worker/package-lock.json`](worker/package-lock.json) 的 `version`
+  - [`server/pyproject.toml`](server/pyproject.toml) 的 `version`（与上列版本号一致）
+- 合并完成后：本地 `git checkout main && git pull origin main`；`git status` 须干净（无未提交变更、无应 push 未 push 的 commit）
+
+---
+
+## 7. PR 与 Review 规则
+
+- 创建 PR 或修复已有 PR 后：**push 当前分支**并检查 PR checks（CI：`server` / `web` / `worker`）
+- 修复 review 时：**不要只看扁平 comment**；优先获取 **unresolved review threads**
+- 先技术评估 review 意见，再修复；外部 reviewer **不是**绝对正确来源
+- **不要**主动 resolve GitHub review threads，除非用户明确要求
+
+### 7.1 强制 Review 触发
+
+每次**新建 PR**，或每次向已有 PR **推送修复**后，必须在对应 PR 上请求：
 
 ```text
 @copilot review
@@ -218,56 +252,49 @@ git diff --check
 gh pr comment <PR_NUMBER> --body $'@copilot review\n@codex review'
 ```
 
-若因权限或无法定位 PR 而无法触发，须在回复中说明。
+对文档、配置、版本号、CHANGELOG、README 更新**同样适用**。无法触发时须在最终回复中**明确说明**原因。
 
-**例外：** 用户明确要求合并进 `main` 时，不强制在合并前再触发上述 review（除非模板/CI 另有要求）。
+**例外：** 任务为**提出或执行**将 PR **合并进 `main`** 时，不强制在合并前再触发上述 review；仅当用户、维护者或 PR 模板/CI 明确要求时才触发。
 
-### 本地 CodeRabbit CLI（push / 开 PR 前建议）
+### 7.2 本地 CodeRabbit CLI（push / 开 PR 前必做）
+
+在 push 或创建 PR **之前**必须本地跑 CodeRabbit，**P1/P2 清零**后才允许 push：
 
 ```bash
+# 对比 main 的已 commit 改动
 cr review --base main --plain
+
+# 未 commit 的草稿
 cr review --type uncommitted --plain
 ```
 
-- P1/P2 应修复后再 push；P3 及以下可记录不阻塞
-- `cr` 不可用须在说明中写明
+- `--plain` 便于 agent 解析
+- P1/P2 必须修复后重跑至 **0**；P3 及以下可记录，不阻塞
+- `cr` 不可用（未安装、超时、权限）须在最终说明中写明；可分目录：`cr review --agent --dir server`
 
 ---
 
-## 6. Git 分支与 MVP 阶段工作流（强制）
+## 8. 工作方式
 
-> **禁止**在「已合并进 `main` 的旧 feature 分支」上继续堆下一阶段工作。否则 PR diff 会重复整段 P0、易与 `main` 冲突、review 失真。
-
-| 规则 | 说明 |
-|------|------|
-| 基线 | 每个新阶段从 **`git fetch origin && git checkout -b feat/<阶段>-<简述> origin/main`** 开始 |
-| 一 PR 一目标 | 例如：`main` 已含 P0 栈（#1）→ Phase 1 单独分支/PR，只含 pipeline 增量 |
-| 误在旧分支开发 | `git reset --hard origin/main` 后 **`git cherry-pick`** 仅保留本阶段提交（勿 replay 已在 main 的提交） |
-| 合并后 | 旧分支视为只读；下一阶段**新建**分支名，不要复用 `feat/p0-mvp-cloudflare-stack` 等已合并名 |
-
-阶段划分见 `docs/p0-mvp-implementation.md`（Phase 0 / 1 / 2…）。Agent 开工前确认：`git log origin/main..HEAD` 不应重复 main 已有的大块提交。
-
----
-
-## 7. 工作方式
-
-- 先读代码再下结论；用 `rg` 找现有 helper/测试，再新增抽象
-- 改动可追溯到用户请求或 review；不要回滚用户未授权的工作区内容
-- 合并到 `main` 时默认 **Squash merge**（保持主干线性），除非维护者另有规定
-- 完成前用第 4 节命令验证，不用「应该过了」代替日志
+- 先读代码再下结论。**不要**根据文件名猜测行为
+- 先用 `rg` 搜索现有 helper、测试和脚本，再新增抽象
+- 改动须可追溯到用户请求或 review 意见；避免顺手改样式、格式或无关重构
+- **不要**回滚或覆盖用户未授权的改动
+- 遇到 review 意见：先评估，再修复
+- 完成前**必须用实际命令验证**（见 §4），禁止用「应该可以」代替结果
 
 ### 与其他 agent 文件同步
 
-修改行为准则、**分支工作流**或 P0 边界时，同步更新：
-
-- `docs/contributing.md`（人类贡献者分支说明）
+修改 **Karpathy 准则**、**PR/分支工作流**或 P0 边界时，同步更新：
 
 - `CLAUDE.md`（本文件）
 - `AGENTS.md`
-- `.cursor/rules/superpowers.mdc`（Superpowers 路由变更时）
+- `docs/contributing.md`
 - `.cursor/rules/karpathy-guidelines.mdc`
+- `.cursor/rules/pr-workflow.mdc`
+- `.cursor/rules/superpowers.mdc`
 - `.cursor/rules/cv-doctor-core.mdc`
-- `.cursor/rules/llm-trust-boundary.mdc`（涉及信任边界时）
+- `.cursor/rules/llm-trust-boundary.mdc`（信任边界时）
 
 ---
 

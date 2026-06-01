@@ -6,7 +6,9 @@ Open, tool-agnostic instructions for AI coding agents (Cursor, Claude Code, Code
 
 Behavioral baseline: [multica-ai/andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills) — Think → Simplicity → Surgical → Goal-Driven.
 
-**Workflow baseline:** When **Superpowers** is installed (Cursor), **always invoke Superpowers skills first** — see [CLAUDE.md §0](CLAUDE.md#0-superpowers-插件--会话级最高优先级) and `.cursor/rules/superpowers.mdc`.
+**Priority order:** [CLAUDE.md §1 Karpathy](CLAUDE.md#1-通用行为准则andrej-karpathy-风格--第一优先级) (**first**) → [§0 Superpowers](CLAUDE.md#0-superpowers-插件--会话级最高优先级) → product/trust → [§5–7 PR workflow](CLAUDE.md#6-github-pr-工作流).
+
+**Workflow baseline:** Superpowers skills when installed — see `.cursor/rules/superpowers.mdc`. PR: squash merge only, CodeRabbit P1/P2=0 before push, `@copilot`/`@codex` review after push — see `.cursor/rules/pr-workflow.mdc`.
 
 ---
 
@@ -32,6 +34,7 @@ Behavioral baseline: [multica-ai/andrej-karpathy-skills](https://github.com/mult
 5. **Pipeline:** default `USE_REAL_PIPELINE=0` (stub, CI); set `USE_REAL_PIPELINE=1` + `DEEPSEEK_API_KEY` for real parse/LLM/DOCX export.
 6. **Minimal diff** — no P1 scrape/profile unless the user explicitly expands scope.
 7. **Verify** — see [CLAUDE.md §4](CLAUDE.md#4-验证清单); CI mirrors server / web / worker jobs.
+8. **PR** — `cr review --base main --plain` before push (P1/P2=0); squash merge to `main`; sync README/CHANGELOG/versions on merge — [CLAUDE.md §6–7](CLAUDE.md#6-github-pr-工作流).
 
 ---
 
@@ -56,8 +59,9 @@ Committed rules: [`.cursor/rules/`](.cursor/rules/)
 
 | Rule | Scope |
 |------|--------|
-| `superpowers.mdc` | Always — **invoke Superpowers plugin skills first** |
-| `karpathy-guidelines.mdc` | Always — behavioral baseline |
+| `karpathy-guidelines.mdc` | Always — **first priority** behavioral baseline |
+| `pr-workflow.mdc` | Always — GitHub PR, squash merge, CI, CodeRabbit, release sync |
+| `superpowers.mdc` | Always — Superpowers skill routing |
 | `cv-doctor-core.mdc` | Always — product + docs hierarchy + P0 guardrails |
 | `llm-trust-boundary.mdc` | Always — anti-hallucination |
 | `server-python.mdc` | `server/**` |
@@ -84,4 +88,4 @@ Use root [`CLAUDE.md`](CLAUDE.md) as project instructions (Chinese-first authori
 
 [`docs/contributing.md`](docs/contributing.md) — Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`).
 
-When changing Karpathy principles, Superpowers routing, or P0 boundaries, sync `CLAUDE.md`, `AGENTS.md`, `.cursor/rules/superpowers.mdc`, and `.cursor/rules/karpathy-guidelines.mdc` + `cv-doctor-core.mdc`.
+When changing Karpathy principles, PR workflow, Superpowers routing, or P0 boundaries, sync `CLAUDE.md`, `AGENTS.md`, `docs/contributing.md`, and `.cursor/rules/{karpathy-guidelines,pr-workflow,superpowers,cv-doctor-core}.mdc`.

@@ -31,11 +31,12 @@ When the **Superpowers** plugin is installed in Cursor, **always use it first** 
 
 ## Precedence
 
-- **Superpowers** governs *how* to work (skills, TDD, verify-before-done).
-- **Karpathy / `CLAUDE.md` §1** governs *code* behavior (simplicity, surgical edits).
-- **`CLAUDE.md` §2–3** governs CV-Doctor product and trust boundaries.
+- **`CLAUDE.md` §1 Karpathy** — **first priority** (all tasks).
+- **Superpowers** — skill workflow (TDD, verify-before-done, review skills).
+- **`CLAUDE.md` §5–7** — PR / squash merge / CodeRabbit / release sync.
+- **`CLAUDE.md` §2–3** — product and trust boundaries.
 
-If a Superpowers skill and domain rules conflict on **product safety** (e.g. anti-hallucination), **domain rules win**.
+On **product safety** (anti-hallucination), **§2–3 wins** over other workflow shortcuts.
 
 ## Cursor-only note
 
