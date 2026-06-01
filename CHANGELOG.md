@@ -14,6 +14,8 @@
 
 ## [0.2.0-p0] — 2026-06-01
 
+> Python 包版本（`server/pyproject.toml`）为 PEP 440 合规的 `0.2.0`；`web`/`worker` 的 npm 版本仍为 `0.2.0-p0`。
+
 **Phase 1 诊断流水线**（[#2](https://github.com/sabialab/cv-doctor/pull/2) squash 合并至 `main`，`09fe8db`）。
 
 ### Added
