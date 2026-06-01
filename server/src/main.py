@@ -129,7 +129,12 @@ def export_session(session_id: str) -> ExportResponse:
         raise HTTPException(400, detail="请先接受至少一条可导出的修改建议")
 
     out = EXPORT_DIR / f"{session_id}.docx"
-    apply_changes_to_docx(rec.resume_bytes, to_export, out)
+    applied = apply_changes_to_docx(rec.resume_bytes, to_export, out)
+    if applied == 0:
+        raise HTTPException(
+            400,
+            detail="未在简历中找到可替换的原文片段，请编辑修改建议或重新上传简历",
+        )
     update_session(session_id, export_path=str(out))
     return ExportResponse(
         download_url=f"/sessions/{session_id}/export/download",

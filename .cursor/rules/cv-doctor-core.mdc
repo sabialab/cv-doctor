@@ -9,6 +9,10 @@ alwaysApply: true
 
 When the **Superpowers** plugin is available: invoke matching skills **before** coding, planning, or claiming completion. See `.cursor/rules/superpowers.mdc` and `CLAUDE.md` §0. Product/trust rules in this repo still override on safety (PolicyGuard, anti-hallucination).
 
+## Git / MVP phases (mandatory)
+
+After a PR merges to `main`, **start the next phase on a new branch from `origin/main`** — do not keep committing on the merged feature branch (avoids huge duplicate diffs and merge conflicts). See `CLAUDE.md` §6.
+
 ## Identity
 
 - **Product:** 简历对症下药 — paste JD, get an auditable surgery list (not a rewrite bot).

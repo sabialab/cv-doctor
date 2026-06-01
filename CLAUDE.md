@@ -234,7 +234,22 @@ cr review --type uncommitted --plain
 
 ---
 
-## 6. 工作方式
+## 6. Git 分支与 MVP 阶段工作流（强制）
+
+> **禁止**在「已合并进 `main` 的旧 feature 分支」上继续堆下一阶段工作。否则 PR diff 会重复整段 P0、易与 `main` 冲突、review 失真。
+
+| 规则 | 说明 |
+|------|------|
+| 基线 | 每个新阶段从 **`git fetch origin && git checkout -b feat/<阶段>-<简述> origin/main`** 开始 |
+| 一 PR 一目标 | 例如：`main` 已含 P0 栈（#1）→ Phase 1 单独分支/PR，只含 pipeline 增量 |
+| 误在旧分支开发 | `git reset --hard origin/main` 后 **`git cherry-pick`** 仅保留本阶段提交（勿 replay 已在 main 的提交） |
+| 合并后 | 旧分支视为只读；下一阶段**新建**分支名，不要复用 `feat/p0-mvp-cloudflare-stack` 等已合并名 |
+
+阶段划分见 `docs/p0-mvp-implementation.md`（Phase 0 / 1 / 2…）。Agent 开工前确认：`git log origin/main..HEAD` 不应重复 main 已有的大块提交。
+
+---
+
+## 7. 工作方式
 
 - 先读代码再下结论；用 `rg` 找现有 helper/测试，再新增抽象
 - 改动可追溯到用户请求或 review；不要回滚用户未授权的工作区内容
@@ -243,7 +258,9 @@ cr review --type uncommitted --plain
 
 ### 与其他 agent 文件同步
 
-修改行为准则或 P0 边界时，同步更新：
+修改行为准则、**分支工作流**或 P0 边界时，同步更新：
+
+- `docs/contributing.md`（人类贡献者分支说明）
 
 - `CLAUDE.md`（本文件）
 - `AGENTS.md`

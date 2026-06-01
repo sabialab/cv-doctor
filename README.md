@@ -80,7 +80,7 @@ cv-doctor diagnose resume.md --jd-file jd.txt
    ↓
 4. 逐条审阅修改建议（接受/拒绝/编辑）
    ↓
-5. 导出优化后简历（P0 为 .txt 文本稿；DOCX/PDF 见后续里程碑）
+5. 导出优化后简历（P0 为已接受修改合并的 `.docx`；PDF 见后续里程碑）
 ```
 
 ---

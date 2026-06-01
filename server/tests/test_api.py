@@ -20,7 +20,10 @@ def test_session_flow_stub():
     from docx import Document
 
     buf = BytesIO()
-    Document().save(buf)
+    doc = Document()
+    doc.add_paragraph("负责后端开发与维护。")
+    doc.add_paragraph("熟悉 Python")
+    doc.save(buf)
     buf.seek(0)
     mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     files = {"resume": ("resume.docx", buf.read(), mime)}

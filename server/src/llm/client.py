@@ -74,7 +74,7 @@ class LLMClient:
                 last_err = exc
                 logger.warning("LLM call attempt %s failed: %s", attempt + 1, exc)
 
-        raise LLMError(f"LLM 结构化输出失败: {last_err}") from last_err
+        raise LLMError("LLM 结构化输出失败，请稍后重试") from last_err
 
 
 def get_llm_client() -> LLMClient:

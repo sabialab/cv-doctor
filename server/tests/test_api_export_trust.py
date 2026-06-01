@@ -48,6 +48,7 @@ def test_api_result_includes_evidence_ids():
         files={"resume": ("resume.docx", buf.getvalue(), mime)},
         data={"jd_text": "需要 Python"},
     )
+    assert r.status_code == 200, r.text
     sid = r.json()["session_id"]
     body = client.get(f"/sessions/{sid}").json()
     assert body["status"] == "ready"

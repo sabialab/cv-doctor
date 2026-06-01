@@ -28,10 +28,16 @@ cd worker && npm ci && npm run typecheck
 
 ## 代码规范
 
-- P0 后端：Ruff 仅覆盖 `server/src/main.py`、`api/`、`p0_models.py`、`services/`（见 CI）
+- P0 后端：Ruff 路径与 `server/.github/workflows/ci.yml` 中 `server` job 一致（含 `pipeline.py`、`parser_*`、`llm/`、`services/*` 等）
 - 类型提示完整；API 契约以 `api/schemas.py` + `p0_models.py` 为准
 - 长期域模型与 PolicyGuard：`server/src/models.py`
 - 完整 LLM 管线：LiteLLM + 环境变量（P0 stub 阶段可不启用）
+
+## 分支与 PR
+
+- **每个 MVP 小阶段**（见 `p0-mvp-implementation.md`）从 `origin/main` 拉新分支，例如 `feat/p0-phase1-pipeline`。
+- **不要**在已合并进 `main` 的旧 PR 分支上继续下一阶段；应 cherry-pick 仅本阶段提交或重新开分支。
+- 完整规则：[CLAUDE.md §6](../CLAUDE.md#6-git-分支与-mvp-阶段工作流强制)
 
 ## 提交规范
 

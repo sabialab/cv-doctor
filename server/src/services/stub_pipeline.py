@@ -55,10 +55,10 @@ def build_stub_diagnosis() -> DiagnosisResult:
             ],
             hard_missing=[
                 GapItem(
-                    requirement="Python 3 年以上",
+                    requirement="FastAPI 框架经验",
                     severity=GapSeverity.HIGH,
-                    suggestion="在工作经历中补充 Python 项目年限与规模",
-                    gap_type=GapType.EXPERIENCE,
+                    suggestion="在技能或项目描述中补充 FastAPI 相关表述（勿编造项目）",
+                    gap_type=GapType.SKILL,
                 )
             ],
             preferred_missing=[
@@ -103,7 +103,7 @@ def build_stub_diagnosis() -> DiagnosisResult:
                 id=str(uuid.uuid4()),
                 section="experiences[0].achievements[0]",
                 original="参与内部系统开发",
-                revised="设计并实现 REST API，支撑日均 10 万请求",
+                revised="参与内部系统开发，补充 REST API 相关职责表述",
                 reason="数字化成果，对齐 JD 数据管道职责。",
                 evidence_ids=["stub-evidence-experience"],
                 risk_level=ChangeRisk.MEDIUM,

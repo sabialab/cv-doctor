@@ -93,19 +93,21 @@ def analyze_gaps(resume: Resume, jd: JobDescription) -> GapReport:
     mandatory_cov, preferred_cov = _score_requirements(analyzed)
     kw_cov = _keyword_coverage(jd, corpus)
 
-    experience_hits = sum(
-        1
-        for r in analyzed
-        if r.category.value == "experience" and r.match_level != MatchLevel.MISSING
-    )
-    exp_total = max(len([r for r in analyzed if r.category.value == "experience"]), 1)
-    exp_rel = round(experience_hits / exp_total * 100, 1)
+    experience_reqs = [r for r in analyzed if r.category.value == "experience"]
+    if experience_reqs:
+        experience_hits = sum(1 for r in experience_reqs if r.match_level != MatchLevel.MISSING)
+        exp_rel = round(experience_hits / len(experience_reqs) * 100, 1)
+        exp_weight = 0.25
+    else:
+        exp_rel = 70.0
+        exp_weight = 0.0
 
     overall = round(
         mandatory_cov * 0.35
         + preferred_cov * 0.15
         + kw_cov * 0.25
-        + exp_rel * 0.25,
+        + exp_rel * exp_weight
+        + (70.0 * (0.25 - exp_weight) if exp_weight == 0 else 0),
         1,
     )
 
