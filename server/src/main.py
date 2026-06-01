@@ -49,25 +49,43 @@ EXPORT_DIR = Path(os.getenv("STORAGE_PATH", "./uploads")) / "exports"
 EXPORT_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def _progress(session_id: str, step: str) -> None:
+    update_session(session_id, processing_step=step)
+
+
 def _run_diagnosis(session_id: str) -> None:
+    from src.processing_steps import PARSING_RESUME, STUB_PROGRESS_SEQUENCE
+
     rec = get_session(session_id)
     if rec is None:
         return
-    update_session(session_id, status="processing")
+    update_session(session_id, status="processing", processing_step=PARSING_RESUME)
     try:
         if config.use_real_pipeline:
             from src.pipeline import run_diagnosis
 
-            result = run_diagnosis(rec.resume_bytes, rec.jd_text)
+            result = run_diagnosis(
+                rec.resume_bytes,
+                rec.jd_text,
+                on_step=lambda s: _progress(session_id, s),
+            )
         else:
+            for step in STUB_PROGRESS_SEQUENCE[1:]:
+                _progress(session_id, step)
             result = build_stub_diagnosis()
             filtered, summary = apply_policy_guard(result.changes)
             result = result.model_copy(
                 update={"changes": filtered, "policy_guard": summary}
             )
-        update_session(session_id, status="ready", result=result, error=None)
+        update_session(
+            session_id,
+            status="ready",
+            result=result,
+            error=None,
+            processing_step=None,
+        )
     except Exception as exc:  # noqa: BLE001 — P0 边界
-        update_session(session_id, status="failed", error=str(exc))
+        update_session(session_id, status="failed", error=str(exc), processing_step=None)
 
 
 @app.get("/health")
@@ -106,6 +124,7 @@ def get_session_route(session_id: str) -> SessionStatusResponse:
         status=rec.status,
         result=api_result,
         error=rec.error,
+        processing_step=rec.processing_step,
     )
 
 

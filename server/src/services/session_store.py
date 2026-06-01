@@ -24,6 +24,7 @@ class SessionRecord:
     result: DiagnosisResult | None = None
     error: str | None = None
     export_path: str | None = None
+    processing_step: str | None = None
 
 
 _lock = threading.Lock()

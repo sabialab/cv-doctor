@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 
 from src.change_generator import generate_changes
 from src.config import config
@@ -22,6 +23,12 @@ from src.p0_models import (
 )
 from src.parser_jd import parse_jd
 from src.parser_resume import parse_resume
+from src.processing_steps import (
+    ANALYZING_JD,
+    GENERATING_CHANGES,
+    MATCHING,
+    PARSING_RESUME,
+)
 from src.services.policy_guard import apply_policy_guard
 
 
@@ -117,15 +124,25 @@ def run_diagnosis(
     jd_text: str,
     *,
     llm: LLMClient | None = None,
+    on_step: Callable[[str], None] | None = None,
 ) -> DiagnosisResult:
     """Run full pipeline and return P0 DiagnosisResult."""
+
+    def step(name: str) -> None:
+        if on_step:
+            on_step(name)
+
     started = time.perf_counter()
     client = llm or get_llm_client()
 
+    step(PARSING_RESUME)
     resume = parse_resume(resume_bytes)
+    step(ANALYZING_JD)
     jd = parse_jd(jd_text, client)
+    step(MATCHING)
     evidence = build_evidence_store(resume, jd)
     gap = analyze_gaps(resume, jd)
+    step(GENERATING_CHANGES)
     change_set = generate_changes(resume, jd, gap, evidence, client, max_changes=3)
     changes, policy_summary = apply_policy_guard(change_set.changes)
 

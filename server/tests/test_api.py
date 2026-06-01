@@ -41,6 +41,7 @@ def test_session_flow_stub():
     assert len(body["result"]["changes"]) <= 3
     assert "policy_guard" in body["result"]
     assert body["result"]["policy_guard"]["passed"] is True
+    assert body["result"].get("free_change_limit") == 3
 
     cid = body["result"]["changes"][0]["id"]
     p = client.patch(f"/sessions/{sid}/changes/{cid}", json={"status": "accepted"})
