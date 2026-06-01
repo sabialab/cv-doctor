@@ -209,7 +209,7 @@ git diff --check
 | 基线 | 每个新阶段从 **`git fetch origin && git checkout -b feat/<阶段>-<简述> origin/main`** 开始 |
 | 一 PR 一目标 | 例如：`main` 已含 P0（#1）→ Phase 1 单独分支/PR，只含本阶段增量 |
 | 误在旧分支开发 | `git reset --hard origin/main` 后 **`git cherry-pick`** 仅保留本阶段提交（勿 replay 已在 main 的提交） |
-| 合并后 | 旧分支视为只读；下一阶段**新建**分支名 |
+| 合并后 | 旧分支**删除**（本地 + `origin`）；本地**必须**切回 `main` 并 `pull` 到最新；下一阶段**新建**分支名 |
 
 阶段划分见 `docs/p0-mvp-implementation.md`。开工前确认：`git log origin/main..HEAD` 不应重复 main 已有的大块提交。
 
@@ -226,7 +226,12 @@ git diff --check
   - [`web/package.json`](web/package.json) 与 [`web/package-lock.json`](web/package-lock.json) 的 `version`
   - [`worker/package.json`](worker/package.json) 与 [`worker/package-lock.json`](worker/package-lock.json) 的 `version`
   - [`server/pyproject.toml`](server/pyproject.toml) 的 `version`（与上列版本号一致）
-- 合并完成后：本地 `git checkout main && git pull origin main`；`git status` 须干净（无未提交变更、无应 push 未 push 的 commit）
+- **合并完成后（Agent 自动执行，无需用户再提醒）：**
+  1. `git fetch origin --prune && git checkout main && git pull origin main` — 本地 `main` 与 `origin/main` 一致
+  2. `git branch -d <已合并的 feature 分支>` — 删除本地多余分支
+  3. `git push origin --delete <已合并的 feature 分支>` — 删除远端同名分支（已 merge 的 PR）
+  4. `git status` 须干净；当前分支为 `main`
+- **禁止**在已合并的旧 feature 分支上继续开发或停留不清理
 
 ---
 

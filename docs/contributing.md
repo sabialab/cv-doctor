@@ -38,6 +38,7 @@ cd worker && npm ci && npm run typecheck
 - **每个 MVP 小阶段**（见 `p0-mvp-implementation.md`）从 `origin/main` 拉新分支，例如 `feat/p0-phase1-pipeline`。
 - **不要**在已合并进 `main` 的旧 PR 分支上继续下一阶段。
 - **合并**：仅 **Squash and merge**；合并后更新 `README.md`、`CHANGELOG.md`、`web/` 与 `worker/` 的 `package.json` + lockfile、`server/pyproject.toml` 版本号。
+- **合并后本地**：`git checkout main && git pull origin main`，删除已合并的 feature 分支（`git branch -d` + `git push origin --delete`）。Agent 在合并任务结束时自动执行。
 - **PR 前**：`cr review --base main --plain`（P1/P2 须为 0）；**PR 后**：`@copilot review` + `@codex review`，等待 CI。
 - 完整规则：[CLAUDE.md §5–7](../CLAUDE.md#5-git-分支与-mvp-阶段工作流强制)
 
