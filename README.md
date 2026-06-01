@@ -49,6 +49,8 @@ cd worker && npm install && npm run dev
 
 测试：`cd server && uv sync --extra dev && uv run python -m pytest tests/test_api.py -q`
 
+变更历史见 [CHANGELOG.md](CHANGELOG.md)。
+
 ### 完整流水线（需 DeepSeek）
 
 ```bash
