@@ -143,6 +143,9 @@ def patch_change(session_id: str, change_id: str, body: ChangePatchRequest) -> C
         raise HTTPException(400, detail="修改内容含禁止表述，无法采纳")
     if rec is None:
         raise HTTPException(404, detail="会话、结果或修改项不存在")
+    if rec.export_path:
+        Path(rec.export_path).unlink(missing_ok=True)
+        update_session(session_id, export_path=None)
     ch = next(c for c in rec.result.changes if c.id == change_id)
     return ChangePatchResponse(id=change_id, status=ch.status)
 

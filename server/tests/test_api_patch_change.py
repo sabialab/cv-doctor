@@ -77,6 +77,17 @@ def test_patch_rejects_whitespace_only_revised():
     assert r.status_code == 422
 
 
+def test_patch_change_clears_stale_export():
+    client = TestClient(app)
+    sid, cid, _ = _ready_session(client)
+    client.patch(f"/sessions/{sid}/changes/{cid}", json={"status": "accepted"})
+    exp = client.post(f"/sessions/{sid}/export")
+    assert exp.status_code == 200
+    client.patch(f"/sessions/{sid}/changes/{cid}", json={"status": "rejected"})
+    down = client.get(exp.json()["download_url"])
+    assert down.status_code == 404
+
+
 def test_patch_status_only_reject():
     client = TestClient(app)
     sid, cid, _ = _ready_session(client)

@@ -81,6 +81,7 @@ export default function SessionPage() {
     }
     setConfirmAcceptId(null);
     setActionError(null);
+    setExportLink(null);
     try {
       await patchChange(sessionId, changeId, { status: "accepted" });
       await load();
@@ -92,6 +93,7 @@ export default function SessionPage() {
   async function onReject(changeId: string) {
     setConfirmAcceptId(null);
     setActionError(null);
+    setExportLink(null);
     try {
       await patchChange(sessionId, changeId, { status: "rejected" });
       await load();
@@ -102,6 +104,7 @@ export default function SessionPage() {
 
   async function onSaveEdit(changeId: string, revised: string) {
     setActionError(null);
+    setExportLink(null);
     try {
       await patchChange(sessionId, changeId, { revised });
       await load();

@@ -83,6 +83,7 @@ export function DiffCard({
           <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-900">
             风险：{ch.risk_level}
             {ch.requires_user_confirmation ? "（建议确认）" : ""}
+            {ch.risk_level === "high" ? "（不可导出）" : ""}
           </span>
         )}
       </div>
@@ -195,6 +196,7 @@ export function DiffCard({
                 <button
                   type="button"
                   onClick={() => {
+                    setConfirmSave(false);
                     setDraft(ch.revised);
                     setEditing(true);
                   }}
