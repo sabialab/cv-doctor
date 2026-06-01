@@ -110,12 +110,8 @@ export default function SessionPage() {
   async function onExport() {
     setActionError(null);
     try {
-      const { download_url, format } = await exportSession(sessionId);
-      if (format === "docx") {
-        setExportLink(exportDownloadUrl(sessionId, download_url));
-      } else {
-        setExportLink(exportDownloadUrl(sessionId, download_url));
-      }
+      const { download_url } = await exportSession(sessionId);
+      setExportLink(exportDownloadUrl(sessionId, download_url));
     } catch (e) {
       setActionError(e instanceof Error ? e.message : "导出失败");
     }

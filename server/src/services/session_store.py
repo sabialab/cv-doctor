@@ -77,7 +77,7 @@ def patch_change(
             if ch.id != change_id:
                 continue
             if revised is not None:
-                ch.revised = revised.strip()
+                ch.revised = revised
                 ch.status = ChangeStatus.ACCEPTED
             elif status is not None:
                 ch.status = ChangeStatus(status) if isinstance(status, str) else status

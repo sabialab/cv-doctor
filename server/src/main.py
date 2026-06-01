@@ -19,7 +19,7 @@ from src.api.schemas import (
     diagnosis_result_for_api,
 )
 from src.config import config
-from src.models import ChangeStatus
+from src.models import ChangeStatus, PolicyAction, PolicyGuard
 from src.services.export_guard import exportable_changes
 from src.services.exporter_docx import apply_changes_to_docx
 from src.services.policy_guard import apply_policy_guard
@@ -130,6 +130,16 @@ def get_session_route(session_id: str) -> SessionStatusResponse:
 
 @app.patch("/sessions/{session_id}/changes/{change_id}", response_model=ChangePatchResponse)
 def patch_change(session_id: str, change_id: str, body: ChangePatchRequest) -> ChangePatchResponse:
+    if body.revised is not None:
+        rec = get_session(session_id)
+        if rec is None or rec.result is None:
+            raise HTTPException(404, detail="会话、结果或修改项不存在")
+        ch = next((c for c in rec.result.changes if c.id == change_id), None)
+        if ch is None:
+            raise HTTPException(404, detail="会话、结果或修改项不存在")
+        if PolicyGuard().check_change(ch.model_copy(update={"revised": body.revised})) == PolicyAction.FORBIDDEN:
+            raise HTTPException(400, detail="修改内容含禁止表述，无法采纳")
+
     rec = store_patch_change(
         session_id,
         change_id,

@@ -56,6 +56,20 @@ def test_patch_rejects_revised_and_status_together():
     assert r.status_code == 422
 
 
+def test_patch_rejects_forbidden_revised():
+    client = TestClient(app)
+    sid, cid, original = _ready_session(client)
+    r = client.patch(
+        f"/sessions/{sid}/changes/{cid}",
+        json={"revised": f"{original}（编造经历）"},
+    )
+    assert r.status_code == 400
+    ch = next(
+        c for c in client.get(f"/sessions/{sid}").json()["result"]["changes"] if c["id"] == cid
+    )
+    assert ch["status"] == "pending"
+
+
 def test_patch_rejects_whitespace_only_revised():
     client = TestClient(app)
     sid, cid, _ = _ready_session(client)
