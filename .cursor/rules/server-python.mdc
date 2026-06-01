@@ -1,41 +1,58 @@
 ---
-description: FastAPI backend conventions — models, services, LLM client, tests.
+description: FastAPI P0 backend — main.py, session_store, stub_pipeline, schemas, tests.
 globs: server/**/*
 alwaysApply: false
 ---
 
 # Server (Python / FastAPI)
 
-## Layout (target per P0 plan)
+## P0 entrypoints (CI-enforced)
+
+These paths are what PR CI runs Ruff/pytest against; prefer edits here for MVP work:
+
+```text
+server/src/main.py
+server/src/api/schemas.py
+server/src/p0_models.py
+server/src/services/session_store.py
+server/src/services/stub_pipeline.py
+server/tests/test_api.py
+```
+
+Legacy modules under `server/src/` (parsers, `llm_client`, etc.) exist for the full product roadmap — **do not assume they are wired in P0** unless you explicitly connect them.
+
+## Layout
 
 ```text
 server/src/
-  main.py           # FastAPI app, routes
-  models.py         # Domain models — extend here first
-  services/         # parser, jd, gap, changes, export, llm_client
-  storage/          # Session file I/O
+  main.py              # Routes: sessions, changes, export, privacy
+  api/schemas.py       # Request/response Pydantic models
+  p0_models.py         # DiagnosisResult, JDInterpretation, etc.
+  models.py            # PolicyGuard, Change, EvidenceStore (long-term)
+  services/
+    session_store.py   # In-memory sessions (dev/stub)
+    stub_pipeline.py   # Stub diagnosis builder
 ```
 
 ## Conventions
 
-- Python 3.11+; Pydantic v2 for all API schemas.
-- Ruff per `docs/contributing.md`; run `pytest` for touched logic.
-- LLM access only through `llm_client` (or `services/llm_client.py`) — no scattered `openai` calls.
-- File upload: validate MIME/size; store under session id; no permanent storage without TTL design.
-- Export: apply **only** user-accepted `Change` ids; DOCX via python-docx.
+- Python 3.11+; Pydantic v2; run via `uv run uvicorn src.main:app`.
+- Extend `p0_models.py` / `api/schemas.py` for API contract changes; keep `PolicyGuard` logic aligned with `models.py`.
+- Background diagnosis: `BackgroundTasks` in `main.py` → `stub_pipeline` (sets `ready` / `failed`).
+- Upload: multipart `resume` + form `jd_text`; export path returns file under `STORAGE_PATH/exports/`.
+- Env: `ALLOWED_ORIGINS`, `STORAGE_PATH`, `AUTO_DELETE_HOURS` (see `.env.example`).
 
-## Testing expectations
+## Testing
 
-Add tests when changing:
+```bash
+cd server && uv sync --extra dev --frozen && uv run pytest -q
+```
 
-- Resume/JD parsers
-- Policy guard evaluation
-- Change generation merge / export
-- Session API contracts
+Add tests when changing session lifecycle, change patch/export behavior, or API schemas.
 
 ## Dependencies
 
-- LiteLLM + env vars (`DEEPSEEK_API_KEY`, etc.) — never commit keys.
-- Optional: `python-docx`, `httpx`, `pydantic-settings`
+- `uv` + `uv.lock`; optional LiteLLM for non-stub pipeline work.
+- Never commit API keys.
 
-Do not add heavy frameworks (Celery, SQLAlchemy) unless P0 plan is updated and user agrees.
+Do not add Celery/SQLAlchemy/Postgres for P0 unless docs and user explicitly expand scope.

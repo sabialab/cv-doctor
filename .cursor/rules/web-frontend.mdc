@@ -1,34 +1,44 @@
 ---
-description: Next.js frontend — mobile-first P0 flows, Chinese copy, API types aligned with server.
+description: Next.js P0 frontend — upload, session polling, result UX order, Chinese copy.
 globs: web/**/*
 alwaysApply: false
 ---
 
 # Web (Next.js)
 
-## P0 pages
+## P0 routes
 
-1. Landing — value prop + privacy note (24h delete)
-2. Workspace — upload DOCX + JD textarea + submit
-3. Result — diagnosis order per `cv-doctor-core` (JD summary → gaps → diffs → score)
-4. Export — download DOCX; gate on accepted changes only
+| Route | Purpose |
+|-------|---------|
+| `/` | Landing + upload workspace (resume + JD) |
+| `/s/[id]` | Result: poll `GET /sessions/{id}` until terminal status |
+| `/privacy` | Privacy / retention copy |
+
+## API client (`web/lib/api.ts`)
+
+- `NEXT_PUBLIC_API_BASE` — default `http://127.0.0.1:8787` (local Python) or Worker URL in preview/prod.
+- `NEXT_PUBLIC_API_PREFIX` — optional prefix (e.g. `/api` when using Worker).
+- `SessionStatus`: `pending` | `processing` | `ready` | `failed` — must match server.
+
+Stop polling when status is `ready` or `failed`. Surface `actionError` on failed actions (export/delete/patch).
 
 ## UX rules
 
-- Mobile-first; min touch target 44px; test ~375px width.
-- Copy in Simplified Chinese; honest tone (no "一键上岸" overclaim).
-- Show loading states for LLM steps (15–30s); partial progress if possible.
-- Diff cards must show: 原文, 改文, 依据, 风险 — not a single blob of text.
-- High-risk card: extra confirm before accept.
+- Mobile-first; touch targets ≥ 44px.
+- Simplified Chinese; honest tone (no overclaiming outcomes).
+- Show loading while `processing` (stub is fast; still handle async contract).
+- Diff cards: 原文 / 改文 / 依据 / 风险; extra confirm for high risk.
+- Match score is secondary, not the hero metric.
 
 ## Code
 
-- TypeScript strict; align types with server Pydantic models.
-- Use App Router patterns already in `web/package.json`.
-- API base URL via env (`NEXT_PUBLIC_API_URL`).
-- No secrets in client bundle.
+- TypeScript strict; keep types aligned with `server/src/api/schemas.py` / `p0_models.py`.
+- App Router; no secrets in client bundle.
 
 ## Verification
 
-- `npm run build` after non-trivial changes.
-- Smoke: upload → result → toggle accept → export when wired to backend.
+```bash
+cd web && npm ci && NEXT_PUBLIC_API_BASE=http://127.0.0.1:8787 npm run build
+```
+
+Smoke when wired: upload → `/s/{id}` → accept toggle → export.

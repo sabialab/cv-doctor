@@ -31,22 +31,31 @@ CV-Doctor 不同：
 
 访问 [cv-doctor.com](https://cv-doctor.com)（即将上线）
 
-### 本地运行
+### P0 MVP 本地运行（无登录，Stub 诊断）
+
+部署架构见 [docs/p0-cloudflare-stack.md](docs/p0-cloudflare-stack.md)；产品范围见 [docs/p0-mvp-implementation.md](docs/p0-mvp-implementation.md)。
 
 ```bash
-git clone https://github.com/your-username/cv-doctor.git
-cd cv-doctor
+# 终端 1 — Python API（:8787）
+cd server && uv sync && uv run uvicorn src.main:app --reload --port 8787
 
-# 后端
+# 终端 2 — Next.js（:3000）
+cd web && cp .env.local.example .env.local && npm install && npm run dev
+
+# 可选：Cloudflare Worker 代理 /api → Python
+cd worker && npm install && npm run dev
+# 此时 web/.env.local 改为 NEXT_PUBLIC_API_BASE=http://127.0.0.1:8788 且 NEXT_PUBLIC_API_PREFIX=/api
+```
+
+测试：`cd server && uv sync --extra dev && uv run python -m pytest tests/test_api.py -q`
+
+### 完整流水线（需 DeepSeek）
+
+```bash
 cd server
-pip install -e .
-cp .env.example .env  # 填入 DeepSeek API Key
-uvicorn src.main:app --reload
-
-# 前端
-cd ../web
-npm install
-npm run dev
+uv sync
+cp .env.example .env  # 填入 DEEPSEEK_API_KEY
+uv run uvicorn src.main:app --reload
 ```
 
 ### CLI（开发者/本地隐私版）
@@ -69,7 +78,7 @@ cv-doctor diagnose resume.md --jd-file jd.txt
    ↓
 4. 逐条审阅修改建议（接受/拒绝/编辑）
    ↓
-5. 导出优化后简历 (DOCX/PDF)
+5. 导出优化后简历（P0 为 .txt 文本稿；DOCX/PDF 见后续里程碑）
 ```
 
 ---

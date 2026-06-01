@@ -1,0 +1,33 @@
+---
+description: Cloudflare Worker (Hono) — API proxy, wrangler, Node 22, CI dry-run.
+globs: worker/**/*
+alwaysApply: false
+---
+
+# Worker (Cloudflare / Hono)
+
+## Role
+
+Optional edge API in `worker/` — proxies or replaces Python API in production per `docs/p0-cloudflare-stack.md`. Local dev often hits Python on `:8787` via `web/lib/api.ts`.
+
+## Layout
+
+```text
+worker/src/index.ts   # Hono routes (health, sessions stub)
+worker/wrangler.toml  # name, compatibility_date, vars
+```
+
+## Conventions
+
+- TypeScript strict; `npm run typecheck` in CI.
+- Wrangler requires **Node ≥ 22** (see `.github/workflows/ci.yml`).
+- Keep request/response shapes aligned with `server/src/api/schemas.py` when implementing real proxy logic.
+- Secrets/bindings (D1, R2, Container) belong in wrangler + dashboard — not committed.
+
+## Verification
+
+```bash
+cd worker && npm ci && npm run typecheck && npx wrangler deploy --dry-run
+```
+
+Do not add heavy frameworks; match existing Hono minimal style.

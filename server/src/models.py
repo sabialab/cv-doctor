@@ -56,6 +56,14 @@ class ChangeRisk(str, Enum):
     HIGH = "high"           # 责任范围扩大、新技能加入
 
 
+class ChangeStatus(str, Enum):
+    """P0 审阅状态（API 用）"""
+
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+
+
 class PolicyAction(str, Enum):
     """安全策略动作"""
 
@@ -290,12 +298,14 @@ class MatchScore(BaseModel):
 class Change(BaseModel):
     """单条修改记录 — v2 增加证据链"""
 
+    id: str = ""                             # P0 API：稳定 id，供 PATCH
     section: str                            # e.g., "experiences[0].achievements[1]"
     original: str                           # 原文
     revised: str                            # 改后
     reason: str                             # 修改原因
     evidence_ids: list[str] = Field(default_factory=list)  # 引用的 Fact ID
     risk_level: ChangeRisk = ChangeRisk.LOW
+    status: ChangeStatus = ChangeStatus.PENDING
     requires_user_confirmation: bool = False
     source_label: str = ""                  # "来自JD第3条" / "来自公司技术博客"
 

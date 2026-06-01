@@ -1,16 +1,26 @@
 # Using agent rules in Cursor — CV-Doctor
 
-This repo ships **Cursor project rules** so Karpathy-style behavioral guidelines and CV-Doctor domain constraints apply automatically.
+This repo ships **Cursor project rules** plus optional **global skills** so behavioral and domain constraints apply automatically.
+
+## Authority order
+
+1. **[`CLAUDE.md`](CLAUDE.md)** — highest standard (Chinese-first; full verify & PR rules)
+2. **[`AGENTS.md`](AGENTS.md)** — cross-tool summary; defers to `CLAUDE.md` on conflict
+3. **`.cursor/rules/*.mdc`** — scoped automation in the IDE
 
 ## In this repository
 
 1. Open the folder in Cursor.
-2. Rules under [`.cursor/rules/`](.cursor/rules/) are committed. Key files:
-   - `karpathy-guidelines.mdc` — `alwaysApply: true` (behavioral baseline)
-   - `cv-doctor-core.mdc` — `alwaysApply: true` (project + P0 scope)
-   - `llm-trust-boundary.mdc` — `alwaysApply: true` (anti-hallucination)
-   - `server-python.mdc` — when editing `server/**`
-   - `web-frontend.mdc` — when editing `web/**`
+2. Committed rules under [`.cursor/rules/`](.cursor/rules/):
+
+| File | When it applies |
+|------|----------------|
+| `karpathy-guidelines.mdc` | Always — Think / Simplicity / Surgical / Verify |
+| `cv-doctor-core.mdc` | Always — product, P0 scope, doc hierarchy |
+| `llm-trust-boundary.mdc` | Always — anti-hallucination, PolicyGuard |
+| `server-python.mdc` | Files under `server/**` |
+| `web-frontend.mdc` | Files under `web/**` |
+
 3. Confirm under **Cursor Settings → Rules** (or Project Rules UI) that these appear.
 
 ## Other tools in the same repo
@@ -18,36 +28,34 @@ This repo ships **Cursor project rules** so Karpathy-style behavioral guidelines
 | Tool | File to read |
 |------|----------------|
 | Claude Code | [`CLAUDE.md`](CLAUDE.md) |
-| Any agent | [`AGENTS.md`](AGENTS.md) |
+| Codex / Copilot / others | [`AGENTS.md`](AGENTS.md) |
 
-Cursor does **not** load `.claude-plugin/` or `CLAUDE.md` by default.
+Cursor does **not** load `CLAUDE.md` automatically — use project rules + `@` skills.
 
 ## Global user skill (`~/.cursor/skills`)
 
-This repo also ships a **Skill** (not only project rules). Install once for every workspace:
+Optional install for Karpathy baseline in every workspace:
 
 ```bash
 mkdir -p ~/.cursor/skills
 cp -R skills/karpathy-guidelines ~/.cursor/skills/karpathy-guidelines
 ```
 
-After copying, new Agent chats can pick up `karpathy-guidelines` from the skill description, or you can @-mention it.
+CV-Doctor-specific rules (P0 scope, trust boundary) stay in `.cursor/rules/` — do not rely on the global skill alone in this repo.
 
-Project-specific rules (CV-Doctor anti-hallucination, P0 scope) remain in `.cursor/rules/` — do not rely on the global skill alone when working in this repo.
+## PR workflow (agents)
 
-## Reuse in another project
-
-**Cursor (project rules):** Copy selected `.mdc` files into that project's `.cursor/rules/`.
-
-**Karpathy baseline (global skill):** Copy `skills/karpathy-guidelines/` to `~/.cursor/skills/karpathy-guidelines/`, or use upstream [andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills).
-
-**Karpathy baseline (rules file):** Copy [andrej-karpathy-skills `.cursor/rules/karpathy-guidelines.mdc`](https://github.com/multica-ai/andrej-karpathy-skills/blob/main/.cursor/rules/karpathy-guidelines.mdc) or merge [`CLAUDE.md`](https://github.com/multica-ai/andrej-karpathy-skills/blob/main/CLAUDE.md) into your root instructions.
-
-## Upstream reference
-
-Behavioral principles trace to [multica-ai/andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills). When updating principles, keep `CLAUDE.md`, `AGENTS.md`, and `karpathy-guidelines.mdc` in sync.
+When creating or updating a PR, follow [`CLAUDE.md` §5](CLAUDE.md#5-pr-与-review-规则): trigger `@copilot review` and `@codex review`, run `cr review --base main --plain` when available, and ensure GitHub Actions (`server` / `web` / `worker`) pass. Worker job requires **Node 22+**.
 
 ## For contributors
 
-- Product behavior changes → update `docs/p0-mvp-implementation.md` and `cv-doctor-core.mdc`.
-- Trust/safety policy changes → update `llm-trust-boundary.mdc` and `server/src/models.py` (`PolicyGuard`).
+| Change type | Update |
+|------------|--------|
+| Product / P0 scope | `docs/p0-mvp-implementation.md`, `cv-doctor-core.mdc` |
+| Deploy / CF | `docs/p0-cloudflare-stack.md`, `CLAUDE.md` §2–3 |
+| Trust / PolicyGuard | `llm-trust-boundary.mdc`, `server/src/models.py` |
+| Karpathy principles | `CLAUDE.md` §1, `AGENTS.md`, `karpathy-guidelines.mdc`, `skills/karpathy-guidelines/` |
+
+## Upstream reference
+
+[multica-ai/andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills) — keep principle files in sync when updating §1.

@@ -10,8 +10,8 @@ CV-Doctor fails if the model invents experience. Treat this as **security + prod
 ## Hard rules
 
 1. **No fabricated facts** — employers, dates, metrics, skills, certifications not grounded in resume or user-confirmed input.
-2. **Evidence chain** — each `Change` in schema should reference `evidence_ids` when the pipeline supports it.
-3. **PolicyGuard** — implement rules aligned with `PolicyGuard` / `PolicyAction` in `server/src/models.py`:
+2. **Evidence chain** — each `Change` in schema should reference `evidence_ids` when the pipeline supports it (full pipeline in `models.py`; P0 stub cards in `p0_models.py` should not invent employers/metrics).
+3. **PolicyGuard** — implement rules aligned with `PolicyGuard` / `PolicyAction` in `server/src/models.py` (source of truth; wire into real pipeline before export):
    - `FORBIDDEN` → block suggestion or export
    - `NEEDS_CONFIRMATION` → require explicit user accept
    - `ALLOWED` → may proceed with normal UX
