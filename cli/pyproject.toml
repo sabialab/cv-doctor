@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cv-doctor-cli"
+version = "0.1.0"
+description = "CV-Doctor CLI — 简历对症下药命令行工具（开发者/本地隐私版）"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = [
+    "typer>=0.12.0",
+    "pydantic>=2.0",
+    "litellm>=1.40.0",
+    "python-docx>=1.1.0",
+    "PyMuPDF>=1.24.0",
+    "scikit-learn>=1.5.0",
+    "rich>=13.0.0",
+    "httpx>=0.27.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.scripts]
+cv-doctor = "src.cli:app"
