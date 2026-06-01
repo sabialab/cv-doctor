@@ -27,6 +27,16 @@ def _ready_session(client: TestClient) -> tuple[str, str, str]:
     return sid, ch0["id"], ch0["original"]
 
 
+def _ready_medium_risk_change(client: TestClient) -> tuple[str, str, str]:
+    mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    files = {"resume": ("resume.docx", _minimal_docx(), mime)}
+    data = {"jd_text": "需要 Python 和 FastAPI 经验的后端工程师。"}
+    sid = client.post("/sessions", files=files, data=data).json()["session_id"]
+    body = client.get(f"/sessions/{sid}").json()
+    medium = next(c for c in body["result"]["changes"] if c["risk_level"] == "medium")
+    return sid, medium["id"], medium["original"]
+
+
 def test_patch_revised_only_updates_export_docx():
     client = TestClient(app)
     sid, cid, original = _ready_session(client)
@@ -44,6 +54,24 @@ def test_patch_revised_only_updates_export_docx():
     out = Document(BytesIO(down.content))
     blob = "\n".join(p.text for p in out.paragraphs)
     assert "用户编辑稿" in blob
+
+
+def test_patch_medium_risk_revised_requires_separate_accept():
+    client = TestClient(app)
+    sid, cid, original = _ready_medium_risk_change(client)
+    edited = f"{original.rstrip('。')}（用户编辑稿）。"
+
+    r = client.patch(f"/sessions/{sid}/changes/{cid}", json={"revised": edited})
+
+    assert r.status_code == 200
+    got = client.get(f"/sessions/{sid}").json()
+    ch = next(c for c in got["result"]["changes"] if c["id"] == cid)
+    assert ch["revised"] == edited
+    assert ch["requires_user_confirmation"] is True
+    assert ch["status"] == "pending"
+    exp = client.post(f"/sessions/{sid}/export")
+    assert exp.status_code == 400
+    assert "请先接受" in exp.json()["detail"]
 
 
 def test_patch_rejects_revised_and_status_together():

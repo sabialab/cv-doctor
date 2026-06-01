@@ -110,7 +110,7 @@ export function DiffCard({
                   onClick={() => handleSave(true)}
                   className="min-h-[44px] rounded bg-green-700 px-3 py-2 text-xs text-white disabled:opacity-50"
                 >
-                  确认保存并采纳
+                  确认保存
                 </button>
                 <button
                   type="button"

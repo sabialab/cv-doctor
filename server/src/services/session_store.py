@@ -84,9 +84,12 @@ def patch_change(
                 if action == PolicyAction.FORBIDDEN:
                     return "forbidden"
                 ch.revised = revised
-                if action == PolicyAction.NEEDS_CONFIRMATION:
-                    ch.requires_user_confirmation = True
-                ch.status = ChangeStatus.ACCEPTED
+                ch.requires_user_confirmation = action == PolicyAction.NEEDS_CONFIRMATION
+                ch.status = (
+                    ChangeStatus.PENDING
+                    if action == PolicyAction.NEEDS_CONFIRMATION
+                    else ChangeStatus.ACCEPTED
+                )
             elif status is not None:
                 ch.status = ChangeStatus(status) if isinstance(status, str) else status
             return rec
