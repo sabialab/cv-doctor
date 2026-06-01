@@ -236,6 +236,7 @@ class JobDescription(BaseModel):
     salary_range: str = ""
     description: str = ""
     requirements: list[JobRequirement] = Field(default_factory=list)
+    responsibilities: list[str] = Field(default_factory=list)
     keywords: list[str] = Field(default_factory=list)
     hard_skills: list[str] = Field(default_factory=list)
     soft_skills: list[str] = Field(default_factory=list)

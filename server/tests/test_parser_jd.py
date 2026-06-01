@@ -17,6 +17,7 @@ def test_parse_jd_mock():
             {"text": "Python 3 年以上", "category": "experience", "is_mandatory": True},
             {"text": "FastAPI", "category": "hard_skill", "is_mandatory": True},
         ],
+        "responsibilities": ["设计与维护 REST API"],
         "keywords": ["Python", "FastAPI"],
         "hard_skills": ["Python"],
         "soft_skills": [],
@@ -30,4 +31,5 @@ def test_parse_jd_mock():
 
     assert jd.title == "高级后端工程师"
     assert len(jd.requirements) == 2
+    assert jd.responsibilities == ["设计与维护 REST API"]
     assert jd.keywords == ["Python", "FastAPI"]

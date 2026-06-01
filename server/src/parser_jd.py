@@ -21,6 +21,7 @@ class _JDParserOutput(BaseModel):
     location: str = ""
     description: str = ""
     requirements: list[_JDRequirementDraft] = Field(default_factory=list)
+    responsibilities: list[str] = Field(default_factory=list)
     keywords: list[str] = Field(default_factory=list)
     hard_skills: list[str] = Field(default_factory=list)
     soft_skills: list[str] = Field(default_factory=list)
@@ -59,6 +60,7 @@ def parse_jd(jd_text: str, llm: LLMClient | None = None) -> JobDescription:
         location=output.location,
         description=output.description or jd_text[:500],
         requirements=[_to_requirement(r) for r in output.requirements],
+        responsibilities=output.responsibilities,
         keywords=output.keywords,
         hard_skills=output.hard_skills,
         soft_skills=output.soft_skills,

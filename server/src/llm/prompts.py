@@ -17,6 +17,7 @@ PARSER_JD_SYSTEM = """你是岗位描述（JD）结构化分析助手。
       "is_mandatory": true
     }
   ],
+  "responsibilities": ["string"],
   "keywords": ["string"],
   "hard_skills": ["string"],
   "soft_skills": ["string"]

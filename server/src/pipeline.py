@@ -36,12 +36,13 @@ def _match_status(overall: float) -> MatchStatus:
 def _jd_interpretation(jd) -> JDInterpretation:
     hard = [r.text for r in jd.requirements if r.is_mandatory]
     preferred = [r.text for r in jd.requirements if not r.is_mandatory]
+    responsibilities = jd.responsibilities or [r.text for r in jd.requirements[:5]]
     return JDInterpretation(
         role_summary=jd.description[:300] if jd.description else f"{jd.title} @ {jd.company}",
         hard_requirements=hard or jd.hard_skills,
         preferred_requirements=preferred or jd.soft_skills,
         keywords=jd.keywords,
-        responsibilities=[r.text for r in jd.requirements if "职责" in r.text][:5],
+        responsibilities=responsibilities[:5],
         nice_to_have=preferred,
     )
 

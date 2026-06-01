@@ -31,6 +31,7 @@ def _mock_llm_responses(resume_bytes: bytes):
             {"text": "FastAPI", "category": "hard_skill", "is_mandatory": True},
             {"text": "Kubernetes", "category": "hard_skill", "is_mandatory": False},
         ],
+        "responsibilities": ["设计与维护 REST API", "参与数据管道建设"],
         "keywords": ["Python", "FastAPI", "PostgreSQL"],
         "hard_skills": ["Python", "FastAPI"],
         "soft_skills": [],
@@ -89,6 +90,7 @@ def test_run_diagnosis_mocked():
         result = run_diagnosis(resume_bytes, jd_text, llm=client)
 
     assert result.jd_interpretation.role_summary
+    assert result.jd_interpretation.responsibilities
     assert result.match_score.overall >= 0
     assert result.match_score.preferred_score == result.match_score.breakdown["preferred_score"]
     assert len(result.changes) <= 3
