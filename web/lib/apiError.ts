@@ -1,8 +1,11 @@
-type FastApiDetailItem = { msg?: string; type?: string };
+interface FastApiDetailItem {
+  msg?: string;
+  type?: string;
+}
 
-type FastApiErrorBody = {
+interface FastApiErrorBody {
   detail?: string | FastApiDetailItem[];
-};
+}
 
 /** Map FastAPI `detail` (string or 422 validation array) to a user-visible message. */
 export function apiErrorMessage(body: unknown, fallback: string): string {
