@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Literal
 
+from src.models import ChangeStatus
 from src.p0_models import DiagnosisResult
 
 SessionStatus = Literal["pending", "processing", "ready", "failed"]
@@ -60,15 +61,26 @@ def update_session(session_id: str, **kwargs: object) -> SessionRecord | None:
         return rec
 
 
-def patch_change(session_id: str, change_id: str, status: str) -> SessionRecord | None:
+def patch_change(
+    session_id: str,
+    change_id: str,
+    *,
+    status: ChangeStatus | str | None = None,
+    revised: str | None = None,
+) -> SessionRecord | None:
     with _lock:
         rec = _sessions.get(session_id)
         if rec is None or rec.result is None:
             return None
         for ch in rec.result.changes:
-            if ch.id == change_id:
-                ch.status = status
-                return rec
+            if ch.id != change_id:
+                continue
+            if revised is not None:
+                ch.revised = revised.strip()
+                ch.status = ChangeStatus.ACCEPTED
+            elif status is not None:
+                ch.status = ChangeStatus(status) if isinstance(status, str) else status
+            return rec
         return None
 
 

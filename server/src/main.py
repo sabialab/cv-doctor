@@ -111,10 +111,16 @@ def get_session_route(session_id: str) -> SessionStatusResponse:
 
 @app.patch("/sessions/{session_id}/changes/{change_id}", response_model=ChangePatchResponse)
 def patch_change(session_id: str, change_id: str, body: ChangePatchRequest) -> ChangePatchResponse:
-    rec = store_patch_change(session_id, change_id, body.status)
+    rec = store_patch_change(
+        session_id,
+        change_id,
+        status=body.status,
+        revised=body.revised,
+    )
     if rec is None:
         raise HTTPException(404, detail="会话、结果或修改项不存在")
-    return ChangePatchResponse(id=change_id, status=body.status)
+    ch = next(c for c in rec.result.changes if c.id == change_id)
+    return ChangePatchResponse(id=change_id, status=ch.status)
 
 
 @app.post("/sessions/{session_id}/export", response_model=ExportResponse)
