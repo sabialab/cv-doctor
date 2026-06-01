@@ -50,9 +50,10 @@ cd worker && npm ci && npm run typecheck
 |------|------|
 | [architecture.md](./architecture.md) | 系统架构、Pipeline、文档地图 |
 | [p0-mvp-implementation.md](./p0-mvp-implementation.md) | 当前迭代任务与 API |
-| [../CLAUDE.md](../CLAUDE.md) | Claude Code / 完整 Agent 说明 |
+| [../CLAUDE.md](../CLAUDE.md) | Agent 最高标准（含 Superpowers §0） |
 | [../AGENTS.md](../AGENTS.md) | 跨工具 Agent 摘要 |
+| [../.cursor/rules/superpowers.mdc](../.cursor/rules/superpowers.mdc) | Superpowers 技能路由（Cursor alwaysApply） |
 | [../skills/karpathy-guidelines/SKILL.md](../skills/karpathy-guidelines/SKILL.md) | 可安装到 `~/.cursor/skills` 的通用行为技能 |
-| [../.cursor/rules/](../.cursor/rules/) | Cursor 项目规则（自动按 glob 生效） |
+| [../.cursor/rules/](../.cursor/rules/) | Cursor 项目规则（alwaysApply + glob） |
 
 PR 前请阅读 [CLAUDE.md §5](../CLAUDE.md#5-pr-与-review-规则)（`@copilot review`、`@codex review`、CI 绿灯）。

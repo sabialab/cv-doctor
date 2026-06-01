@@ -5,6 +5,10 @@ alwaysApply: true
 
 # CV-Doctor — Project Core
 
+## Superpowers (always first)
+
+When the **Superpowers** plugin is available: invoke matching skills **before** coding, planning, or claiming completion. See `.cursor/rules/superpowers.mdc` and `CLAUDE.md` §0. Product/trust rules in this repo still override on safety (PolicyGuard, anti-hallucination).
+
 ## Identity
 
 - **Product:** 简历对症下药 — paste JD, get an auditable surgery list (not a rewrite bot).
@@ -40,8 +44,8 @@ Statuses: `pending` | `processing` | `ready` | `failed`. Frontend: `web/lib/api.
 | Area | Now (branch) | Target (docs) |
 |------|----------------|---------------|
 | Sessions | In-memory `SessionStore` | D1 + R2 |
-| Diagnosis | `stub_pipeline` | Container + LiteLLM pipeline |
-| Export | `.txt` stub under `STORAGE_PATH/exports` | DOCX via python-docx |
+| Diagnosis | `stub_pipeline` (default) or `pipeline` (`USE_REAL_PIPELINE=1`) | Container + LiteLLM |
+| Export | DOCX via `exporter_docx` (accepted, non-HIGH only) | Same |
 | Edge API | Optional `worker/` proxy | Worker + Pages production |
 
 ## Explicit non-goals for default work
@@ -63,4 +67,4 @@ Statuses: `pending` | `processing` | `ready` | `failed`. Frontend: `web/lib/api.
 
 ## Cross-references
 
-Full standard: `CLAUDE.md` (canonical). Summary: `AGENTS.md`. Trust: `llm-trust-boundary.mdc`.
+Full standard: `CLAUDE.md` (canonical). Summary: `AGENTS.md`. Superpowers: `superpowers.mdc`. Trust: `llm-trust-boundary.mdc`.

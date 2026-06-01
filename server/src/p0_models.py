@@ -55,6 +55,8 @@ class GapItem(BaseModel):
 
 
 class P0GapReport(BaseModel):
+    matched: list[str] = Field(default_factory=list)
+    partial_match: list[GapItem] = Field(default_factory=list)
     hard_missing: list[GapItem] = Field(default_factory=list)
     preferred_missing: list[GapItem] = Field(default_factory=list)
     keyword_missing: list[str] = Field(default_factory=list)

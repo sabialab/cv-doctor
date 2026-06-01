@@ -1,0 +1,42 @@
+---
+description: Always prioritize the Superpowers plugin — read and invoke matching skills before acting.
+alwaysApply: true
+---
+
+# Superpowers Plugin — Highest Priority
+
+When the **Superpowers** plugin is installed in Cursor, **always use it first** — at session start, before clarifying questions, and before any implementation or completion claim.
+
+## Required workflow
+
+1. **Session start:** Read the `using-superpowers` skill (how to find and invoke skills).
+2. **Before acting:** Match the user request to a Superpowers skill; read that skill **before** writing code, plans, or final answers.
+3. **Do not skip** because the task looks small — pick the lightest applicable skill (e.g. `verification-before-completion` for “is it done?”).
+
+## Skill routing (common cases)
+
+| Situation | Skill |
+|-----------|--------|
+| New feature, behavior change, UX copy, architecture choice | `brainstorming` |
+| Written plan to execute | `executing-plans` or `subagent-driven-development` |
+| Bug, test failure, unexpected behavior | `systematic-debugging` |
+| Feature or bugfix implementation | `test-driven-development` |
+| About to say “done” / pass / fixed | `verification-before-completion` |
+| Code review feedback received | `receiving-code-review` |
+| Major step complete, before merge | `requesting-code-review` |
+| Branch integration decision | `finishing-a-development-branch` |
+| Multi-step spec, no plan yet | `writing-plans` |
+| 2+ independent parallel tasks | `dispatching-parallel-agents` |
+| Isolated feature work | `using-git-worktrees` |
+
+## Precedence
+
+- **Superpowers** governs *how* to work (skills, TDD, verify-before-done).
+- **Karpathy / `CLAUDE.md` §1** governs *code* behavior (simplicity, surgical edits).
+- **`CLAUDE.md` §2–3** governs CV-Doctor product and trust boundaries.
+
+If a Superpowers skill and domain rules conflict on **product safety** (e.g. anti-hallucination), **domain rules win**.
+
+## Cursor-only note
+
+Superpowers skills are invoked via the plugin’s Skill tool in Cursor. Other agents: follow the same routing using [`AGENTS.md`](../../AGENTS.md) and [`CLAUDE.md`](../../CLAUDE.md) §0.

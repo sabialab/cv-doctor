@@ -4,6 +4,7 @@ This repo ships **Cursor project rules** plus optional **global skills** so beha
 
 ## Authority order
 
+0. **Superpowers plugin (Cursor)** — invoke matching skills **before any other action**; see [CLAUDE.md §0](CLAUDE.md#0-superpowers-插件--会话级最高优先级) and `.cursor/rules/superpowers.mdc`
 1. **[`CLAUDE.md`](CLAUDE.md)** — highest standard (Chinese-first; full verify & PR rules)
 2. **[`AGENTS.md`](AGENTS.md)** — cross-tool summary; defers to `CLAUDE.md` on conflict
 3. **`.cursor/rules/*.mdc`** — scoped automation in the IDE
@@ -15,6 +16,7 @@ This repo ships **Cursor project rules** plus optional **global skills** so beha
 
 | File | When it applies |
 |------|----------------|
+| `superpowers.mdc` | Always — **Superpowers plugin first** (skills routing) |
 | `karpathy-guidelines.mdc` | Always — Think / Simplicity / Surgical / Verify |
 | `cv-doctor-core.mdc` | Always — product, P0 scope, doc hierarchy |
 | `llm-trust-boundary.mdc` | Always — anti-hallucination, PolicyGuard |
@@ -55,6 +57,7 @@ When creating or updating a PR, follow [`CLAUDE.md` §5](CLAUDE.md#5-pr-与-revi
 | Deploy / CF | `docs/p0-cloudflare-stack.md`, `CLAUDE.md` §2–3 |
 | Trust / PolicyGuard | `llm-trust-boundary.mdc`, `server/src/models.py` |
 | Karpathy principles | `CLAUDE.md` §1, `AGENTS.md`, `karpathy-guidelines.mdc`, `skills/karpathy-guidelines/` |
+| Superpowers routing | `CLAUDE.md` §0, `superpowers.mdc`, `AGENTS.md` rule 0 |
 
 ## Upstream reference
 

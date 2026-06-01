@@ -25,9 +25,10 @@ CV-Doctor 是 **Web 优先的简历手术台**：用户上传简历（DOCX）并
 
 | 优先级 | 路径 | 读者 | 内容 |
 |--------|------|------|------|
-| 1 | [../CLAUDE.md](../CLAUDE.md) | Claude Code、本仓库默认 Agent | **最高标准**：Karpathy 行为准则、P0 实情、验证命令、PR/review |
+| 0 | Superpowers 插件（Cursor） | Cursor Agent | **会话级最高**：先读/调用 Superpowers 技能；见 [CLAUDE.md §0](../CLAUDE.md#0-superpowers-插件--会话级最高优先级)、`.cursor/rules/superpowers.mdc` |
+| 1 | [../CLAUDE.md](../CLAUDE.md) | Claude Code、本仓库默认 Agent | **最高标准**：Superpowers §0、Karpathy 行为准则、P0 实情、验证命令、PR/review |
 | 2 | [../AGENTS.md](../AGENTS.md) | Codex、Copilot、其他工具 | 摘要；与 `CLAUDE.md` 冲突时以 `CLAUDE.md` 为准 |
-| 3 | [`../.cursor/rules/`](../.cursor/rules/) | Cursor IDE | 按 glob 自动注入（核心域、server、web、worker、信任边界） |
+| 3 | [`../.cursor/rules/`](../.cursor/rules/) | Cursor IDE | 按 glob / alwaysApply 自动注入（**superpowers**、核心域、server、web、信任边界） |
 | 4 | [../CURSOR.md](../CURSOR.md) | Cursor 用户 | 如何在 Cursor 中启用上述规则 |
 | 5 | [../skills/karpathy-guidelines/SKILL.md](../skills/karpathy-guidelines/SKILL.md) | 可选全局技能 | 可复制到 `~/.cursor/skills/`，非 CV-Doctor 专属 |
 
@@ -48,7 +49,7 @@ CV-Doctor 是 **Web 优先的简历手术台**：用户上传简历（DOCX）并
 | API 契约 | `server/src/api/schemas.py`、`p0_models.py` | 同左 + 与 `models.py` 对齐 |
 | 领域与策略 | `server/src/models.py`（`PolicyGuard` 等） | Pipeline 各 stage 消费 |
 | 会话存储 | `server/src/services/session_store.py` | D1 + R2（见 Cloudflare 文档） |
-| 诊断生成 | `server/src/services/stub_pipeline.py` | Container + LiteLLM 多步 Pipeline |
+| 诊断生成 | `stub_pipeline`（默认）/ `pipeline`（`USE_REAL_PIPELINE=1`） | Container + LiteLLM 多步 Pipeline |
 | 边缘 API | `worker/`（可选） | 生产 Worker 代理 |
 | 前端 | `web/lib/api.ts` | 与 API 状态枚举一致 |
 
@@ -317,6 +318,7 @@ web/
 | [mvp-feasibility.md](./mvp-feasibility.md) | 范围与风险 |
 | [contributing.md](./contributing.md) | 人类贡献：提交、CI、PR |
 | [PLAN.md](../PLAN.md) | 产品全景（非 P0 承诺） |
-| [CLAUDE.md](../CLAUDE.md) | Agent 最高执行标准 |
+| [CLAUDE.md](../CLAUDE.md) | Agent 最高执行标准（含 Superpowers §0） |
 | [AGENTS.md](../AGENTS.md) | 跨工具 Agent 摘要 |
+| [.cursor/rules/superpowers.mdc](../.cursor/rules/superpowers.mdc) | Superpowers 技能路由 |
 | [CURSOR.md](../CURSOR.md) | Cursor 规则说明 |

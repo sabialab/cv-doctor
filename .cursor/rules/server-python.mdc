@@ -1,5 +1,5 @@
 ---
-description: FastAPI P0 backend — main.py, session_store, stub_pipeline, schemas, tests.
+description: FastAPI P0 backend — main.py, pipeline, session_store, export, schemas, tests.
 globs: server/**/*
 alwaysApply: false
 ---
@@ -8,39 +8,50 @@ alwaysApply: false
 
 ## P0 entrypoints (CI-enforced)
 
-These paths are what PR CI runs Ruff/pytest against; prefer edits here for MVP work:
-
 ```text
 server/src/main.py
 server/src/api/schemas.py
 server/src/p0_models.py
+server/src/config.py
+server/src/pipeline.py
+server/src/parser_resume.py
+server/src/parser_jd.py
+server/src/facts.py
+server/src/gap_analyzer.py
+server/src/change_generator.py
+server/src/llm/
 server/src/services/session_store.py
 server/src/services/stub_pipeline.py
-server/tests/test_api.py
+server/src/services/policy_guard.py
+server/src/services/export_guard.py
+server/src/services/exporter_docx.py
+server/tests/
 ```
-
-Legacy modules under `server/src/` (parsers, `llm_client`, etc.) exist for the full product roadmap — **do not assume they are wired in P0** unless you explicitly connect them.
 
 ## Layout
 
 ```text
 server/src/
-  main.py              # Routes: sessions, changes, export, privacy
-  api/schemas.py       # Request/response Pydantic models
-  p0_models.py         # DiagnosisResult, JDInterpretation, etc.
-  models.py            # PolicyGuard, Change, EvidenceStore (long-term)
+  main.py              # Routes; config.use_real_pipeline → pipeline vs stub
+  pipeline.py          # Real diagnosis orchestration
+  api/schemas.py       # API DTOs (+ evidence_ids in changes)
+  p0_models.py         # DiagnosisResult, gap matched/partial/missing
+  models.py            # PolicyGuard, Change, EvidenceStore
   services/
-    session_store.py   # In-memory sessions (dev/stub)
-    stub_pipeline.py   # Stub diagnosis builder
+    session_store.py
+    stub_pipeline.py
+    policy_guard.py
+    export_guard.py    # HIGH risk never exported
+    exporter_docx.py   # Merge accepted changes into resume DOCX
 ```
 
 ## Conventions
 
-- Python 3.11+; Pydantic v2; run via `uv run uvicorn src.main:app`.
-- Extend `p0_models.py` / `api/schemas.py` for API contract changes; keep `PolicyGuard` logic aligned with `models.py`.
-- Background diagnosis: `BackgroundTasks` in `main.py` → `stub_pipeline` (sets `ready` / `failed`).
-- Upload: multipart `resume` + form `jd_text`; export path returns file under `STORAGE_PATH/exports/`.
-- Env: `ALLOWED_ORIGINS`, `STORAGE_PATH`, `AUTO_DELETE_HOURS` (see `.env.example`).
+- Python 3.11+; Pydantic v2; `uv run uvicorn src.main:app`.
+- `USE_REAL_PIPELINE=1` + `DEEPSEEK_API_KEY` for real LLM path; default `0` for CI/stub.
+- Upload: multipart `resume` + **form string** `jd_text` (not file field).
+- Export: only `ACCEPTED` and non-`HIGH` changes → `.docx` under `STORAGE_PATH/exports/`.
+- Env: `ALLOWED_ORIGINS`, `STORAGE_PATH`, `USE_REAL_PIPELINE` (see `.env.example`).
 
 ## Testing
 
@@ -48,11 +59,11 @@ server/src/
 cd server && uv sync --extra dev --frozen && uv run pytest -q
 ```
 
-Add tests when changing session lifecycle, change patch/export behavior, or API schemas.
+Cover export trust, fixture curl contract, and mocked real-pipeline API when touching pipeline/export.
 
 ## Dependencies
 
-- `uv` + `uv.lock`; optional LiteLLM for non-stub pipeline work.
+- `uv` + `uv.lock`; LiteLLM for real pipeline.
 - Never commit API keys.
 
 Do not add Celery/SQLAlchemy/Postgres for P0 unless docs and user explicitly expand scope.

@@ -1,33 +1,28 @@
 """基础测试 — 验证项目结构和数据模型 v2"""
 
-import pytest
 
 from src.models import (
-    Resume,
-    ContactInfo,
-    Experience,
-    Education,
-    Project,
-    JobDescription,
-    JobRequirement,
-    CompanyProfile,
+    Change,
+    ChangeRisk,
+    ChangeSet,
     CompanyClaim,
-    MatchScore,
-    GapReport,
-    SurgeryReport,
-    OptimizationResult,
-    MatchLevel,
-    RequirementCategory,
+    CompanyProfile,
+    ContactInfo,
+    Education,
+    EvidenceStore,
+    Experience,
     Fact,
     FactSource,
-    EvidenceStore,
-    Change,
-    ChangeSet,
-    ChangeRisk,
-    PolicyGuard,
+    JobDescription,
+    JobRequirement,
+    MatchScore,
+    OptimizationResult,
     PolicyAction,
+    PolicyGuard,
+    RequirementCategory,
+    Resume,
+    SurgeryReport,
 )
-
 
 # ==================== 证据系统测试 ====================
 

@@ -6,6 +6,8 @@ Open, tool-agnostic instructions for AI coding agents (Cursor, Claude Code, Code
 
 Behavioral baseline: [multica-ai/andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills) — Think → Simplicity → Surgical → Goal-Driven.
 
+**Workflow baseline:** When **Superpowers** is installed (Cursor), **always invoke Superpowers skills first** — see [CLAUDE.md §0](CLAUDE.md#0-superpowers-插件--会话级最高优先级) and `.cursor/rules/superpowers.mdc`.
+
 ---
 
 ## Project
@@ -22,10 +24,11 @@ Behavioral baseline: [multica-ai/andrej-karpathy-skills](https://github.com/mult
 
 ## Quick rules for agents
 
+0. **Superpowers first (Cursor):** At session start read `using-superpowers`; before creative work → `brainstorming`; before implement → `test-driven-development` / `executing-plans`; before claiming done → `verification-before-completion`. Full routing: [CLAUDE.md §0](CLAUDE.md#0-superpowers-插件--会话级最高优先级), `.cursor/rules/superpowers.mdc`.
 1. **Read** `docs/p0-mvp-implementation.md` and `docs/p0-cloudflare-stack.md` before large product or deploy changes.
 2. **Respect** `server/src/models.py` (`PolicyGuard`) and **extend** `server/src/p0_models.py` for P0 API shapes — do not fork parallel domain types.
 3. **Never** auto-apply high-risk resume edits; session status uses `ready` / `failed`, not `done`, unless you update API + web + tests together.
-4. **Know the stub:** current diagnosis path is `stub_pipeline` + in-memory `SessionStore` — not full DOCX/LLM until wired.
+4. **Pipeline:** default `USE_REAL_PIPELINE=0` (stub, CI); set `USE_REAL_PIPELINE=1` + `DEEPSEEK_API_KEY` for real parse/LLM/DOCX export.
 5. **Minimal diff** — no P1 scrape/profile unless the user explicitly expands scope.
 6. **Verify** — see [CLAUDE.md §4](CLAUDE.md#4-验证清单); CI mirrors server / web / worker jobs.
 
@@ -52,6 +55,7 @@ Committed rules: [`.cursor/rules/`](.cursor/rules/)
 
 | Rule | Scope |
 |------|--------|
+| `superpowers.mdc` | Always — **invoke Superpowers plugin skills first** |
 | `karpathy-guidelines.mdc` | Always — behavioral baseline |
 | `cv-doctor-core.mdc` | Always — product + docs hierarchy + P0 guardrails |
 | `llm-trust-boundary.mdc` | Always — anti-hallucination |
@@ -79,4 +83,4 @@ Use root [`CLAUDE.md`](CLAUDE.md) as project instructions (Chinese-first authori
 
 [`docs/contributing.md`](docs/contributing.md) — Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`).
 
-When changing Karpathy principles or P0 boundaries, sync `CLAUDE.md`, `AGENTS.md`, and `.cursor/rules/karpathy-guidelines.mdc` + `cv-doctor-core.mdc`.
+When changing Karpathy principles, Superpowers routing, or P0 boundaries, sync `CLAUDE.md`, `AGENTS.md`, `.cursor/rules/superpowers.mdc`, and `.cursor/rules/karpathy-guidelines.mdc` + `cv-doctor-core.mdc`.

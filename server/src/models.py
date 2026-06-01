@@ -287,6 +287,7 @@ class MatchScore(BaseModel):
 
     overall: float = Field(default=0.0, ge=0.0, le=100.0)
     mandatory_coverage: float = Field(default=0.0, ge=0.0, le=100.0)
+    preferred_coverage: float = Field(default=0.0, ge=0.0, le=100.0)
     keyword_coverage: float = Field(default=0.0, ge=0.0, le=100.0)
     experience_relevance: float = Field(default=0.0, ge=0.0, le=100.0)
     expression_quality: float = Field(default=0.0, ge=0.0, le=100.0)

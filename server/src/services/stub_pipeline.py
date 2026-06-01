@@ -44,6 +44,15 @@ def build_stub_diagnosis() -> DiagnosisResult:
             },
         ),
         gap_report=P0GapReport(
+            matched=["熟悉 FastAPI 相关技术栈"],
+            partial_match=[
+                GapItem(
+                    requirement="Python 3 年以上",
+                    severity=GapSeverity.MEDIUM,
+                    suggestion="可补充项目年限表述，勿夸大",
+                    gap_type=GapType.EXPERIENCE,
+                )
+            ],
             hard_missing=[
                 GapItem(
                     requirement="Python 3 年以上",

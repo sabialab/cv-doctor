@@ -18,7 +18,10 @@ from src.api.schemas import (
     SessionStatusResponse,
     diagnosis_result_for_api,
 )
+from src.config import config
 from src.models import ChangeStatus
+from src.services.export_guard import exportable_changes
+from src.services.exporter_docx import apply_changes_to_docx
 from src.services.session_store import (
     create_session,
     delete_session,
@@ -51,8 +54,12 @@ def _run_diagnosis(session_id: str) -> None:
         return
     update_session(session_id, status="processing")
     try:
-        # P0：桩数据；M4 替换为真实 parse + LLM
-        result = build_stub_diagnosis()
+        if config.use_real_pipeline:
+            from src.pipeline import run_diagnosis
+
+            result = run_diagnosis(rec.resume_bytes, rec.jd_text)
+        else:
+            result = build_stub_diagnosis()
         update_session(session_id, status="ready", result=result, error=None)
     except Exception as exc:  # noqa: BLE001 — P0 边界
         update_session(session_id, status="failed", error=str(exc))
@@ -110,20 +117,24 @@ def export_session(session_id: str) -> ExportResponse:
     rec = get_session(session_id)
     if rec is None or rec.result is None:
         raise HTTPException(404, detail="会话不可用")
-    accepted = [c for c in rec.result.changes if c.status == ChangeStatus.ACCEPTED]
-    if not accepted:
-        raise HTTPException(400, detail="请先接受至少一条修改建议")
 
-    out = EXPORT_DIR / f"{session_id}.txt"
-    lines = ["# CV Doctor P0 导出（桩）", "", "已采纳修改：", ""]
-    for c in accepted:
-        lines.append(f"## {c.section}")
-        lines.append(f"- 原文：{c.original}")
-        lines.append(f"- 改后：{c.revised}")
-        lines.append("")
-    out.write_text("\n".join(lines), encoding="utf-8")
+    to_export = exportable_changes(rec.result.changes)
+    if not to_export:
+        accepted_any = any(c.status == ChangeStatus.ACCEPTED for c in rec.result.changes)
+        if accepted_any:
+            raise HTTPException(
+                400,
+                detail="高风险修改不能导出；请仅接受低/中风险建议，或取消高风险项的接受",
+            )
+        raise HTTPException(400, detail="请先接受至少一条可导出的修改建议")
+
+    out = EXPORT_DIR / f"{session_id}.docx"
+    apply_changes_to_docx(rec.resume_bytes, to_export, out)
     update_session(session_id, export_path=str(out))
-    return ExportResponse(download_url=f"/sessions/{session_id}/export/download", format="txt")
+    return ExportResponse(
+        download_url=f"/sessions/{session_id}/export/download",
+        format="docx",
+    )
 
 
 @app.get("/sessions/{session_id}/export/download")
@@ -133,8 +144,8 @@ def download_export(session_id: str):
         raise HTTPException(404, detail="导出文件不存在")
     return FileResponse(
         rec.export_path,
-        filename="resume-export.txt",
-        media_type="text/plain",
+        filename="resume-export.docx",
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     )
 
 
