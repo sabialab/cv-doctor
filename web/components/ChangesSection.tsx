@@ -28,12 +28,13 @@ export function ChangesSection({
   onSaveEdit,
   onCancelConfirm,
 }: ChangesSectionProps) {
-  const total = Math.min(changes.length, freeLimit);
+  const visible = changes.slice(0, freeLimit);
+  const total = visible.length;
   return (
     <section className="rounded-xl border border-neutral-200 p-5">
       <h2 className="text-lg font-medium">5. 简历手术建议（免费 {freeLimit} 条）</h2>
       <div className="mt-4 space-y-4">
-        {changes.map((ch, i) => (
+        {visible.map((ch, i) => (
           <DiffCard
             key={ch.id}
             index={i + 1}

@@ -35,6 +35,7 @@ export default function SessionPage() {
   const [deleting, setDeleting] = useState(false);
   const [confirmAcceptId, setConfirmAcceptId] = useState<string | null>(null);
   const [pollSlow, setPollSlow] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -46,6 +47,8 @@ export default function SessionPage() {
     } catch (e) {
       setStatus("failed");
       setError(e instanceof Error ? e.message : "加载失败");
+    } finally {
+      setLoaded(true);
     }
   }, [sessionId]);
 
@@ -128,6 +131,14 @@ export default function SessionPage() {
     } finally {
       setDeleting(false);
     }
+  }
+
+  if (!loaded) {
+    return (
+      <main className="mx-auto max-w-2xl overflow-x-hidden px-4 py-12">
+        <p className="text-neutral-600">加载中…</p>
+      </main>
+    );
   }
 
   if (stillAnalyzing && !result) {

@@ -19,7 +19,7 @@ from src.api.schemas import (
     diagnosis_result_for_api,
 )
 from src.config import config
-from src.models import ChangeStatus, PolicyAction, PolicyGuard
+from src.models import ChangeStatus
 from src.services.export_guard import exportable_changes
 from src.services.exporter_docx import apply_changes_to_docx
 from src.services.policy_guard import apply_policy_guard
@@ -54,6 +54,8 @@ def _progress(session_id: str, step: str) -> None:
 
 
 def _run_diagnosis(session_id: str) -> None:
+    import time
+
     from src.processing_steps import PARSING_RESUME, STUB_PROGRESS_SEQUENCE
 
     rec = get_session(session_id)
@@ -72,6 +74,7 @@ def _run_diagnosis(session_id: str) -> None:
         else:
             for step in STUB_PROGRESS_SEQUENCE[1:]:
                 _progress(session_id, step)
+                time.sleep(0.35)
             result = build_stub_diagnosis()
             filtered, summary = apply_policy_guard(result.changes)
             result = result.model_copy(
@@ -130,22 +133,14 @@ def get_session_route(session_id: str) -> SessionStatusResponse:
 
 @app.patch("/sessions/{session_id}/changes/{change_id}", response_model=ChangePatchResponse)
 def patch_change(session_id: str, change_id: str, body: ChangePatchRequest) -> ChangePatchResponse:
-    if body.revised is not None:
-        rec = get_session(session_id)
-        if rec is None or rec.result is None:
-            raise HTTPException(404, detail="会话、结果或修改项不存在")
-        ch = next((c for c in rec.result.changes if c.id == change_id), None)
-        if ch is None:
-            raise HTTPException(404, detail="会话、结果或修改项不存在")
-        if PolicyGuard().check_change(ch.model_copy(update={"revised": body.revised})) == PolicyAction.FORBIDDEN:
-            raise HTTPException(400, detail="修改内容含禁止表述，无法采纳")
-
     rec = store_patch_change(
         session_id,
         change_id,
         status=body.status,
         revised=body.revised,
     )
+    if rec == "forbidden":
+        raise HTTPException(400, detail="修改内容含禁止表述，无法采纳")
     if rec is None:
         raise HTTPException(404, detail="会话、结果或修改项不存在")
     ch = next(c for c in rec.result.changes if c.id == change_id)

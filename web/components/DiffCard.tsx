@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import type { DiagnosisResult } from "@/lib/api";
 
@@ -46,11 +46,23 @@ export function DiffCard({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(ch.revised);
   const [saving, setSaving] = useState(false);
+  const [confirmSave, setConfirmSave] = useState(false);
 
   const needsGate = ch.risk_level === "high" || ch.requires_user_confirmation;
 
-  async function handleSave() {
+  useEffect(() => {
+    if (!editing) {
+      setDraft(ch.revised);
+    }
+  }, [ch.revised, editing]);
+
+  async function handleSave(confirmed = false) {
     if (!draft.trim()) return;
+    if (needsGate && !confirmed) {
+      setConfirmSave(true);
+      return;
+    }
+    setConfirmSave(false);
     setSaving(true);
     try {
       await onSaveEdit(ch.id, draft.trim());
@@ -83,24 +95,50 @@ export function DiffCard({
             onChange={(e) => setDraft(e.target.value)}
           />
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled={saving}
-              onClick={handleSave}
-              className="min-h-[44px] rounded bg-green-700 px-3 py-2 text-xs text-white disabled:opacity-50"
-            >
-              {saving ? "保存中…" : "保存并采纳"}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setEditing(false);
-                setDraft(ch.revised);
-              }}
-              className="min-h-[44px] rounded border border-neutral-300 px-3 py-2 text-xs"
-            >
-              取消
-            </button>
+            {confirmSave ? (
+              <>
+                <p className="w-full text-xs text-amber-900">
+                  此为需确认的修改，请核实内容属实后再保存采纳。
+                </p>
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => handleSave(true)}
+                  className="min-h-[44px] rounded bg-green-700 px-3 py-2 text-xs text-white disabled:opacity-50"
+                >
+                  确认保存并采纳
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmSave(false)}
+                  className="min-h-[44px] rounded border border-neutral-300 px-3 py-2 text-xs"
+                >
+                  取消
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => handleSave()}
+                  className="min-h-[44px] rounded bg-green-700 px-3 py-2 text-xs text-white disabled:opacity-50"
+                >
+                  {saving ? "保存中…" : "保存并采纳"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setConfirmSave(false);
+                    setEditing(false);
+                    setDraft(ch.revised);
+                  }}
+                  className="min-h-[44px] rounded border border-neutral-300 px-3 py-2 text-xs"
+                >
+                  取消
+                </button>
+              </>
+            )}
           </div>
         </div>
       ) : (

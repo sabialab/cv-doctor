@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Literal
 
-from src.models import ChangeStatus
+from src.models import ChangeStatus, PolicyAction, PolicyGuard
 from src.p0_models import DiagnosisResult
 
 SessionStatus = Literal["pending", "processing", "ready", "failed"]
@@ -26,6 +26,8 @@ class SessionRecord:
     export_path: str | None = None
     processing_step: str | None = None
 
+
+PatchChangeResult = SessionRecord | Literal["forbidden"] | None
 
 _lock = threading.Lock()
 _sessions: dict[str, SessionRecord] = {}
@@ -68,7 +70,7 @@ def patch_change(
     *,
     status: ChangeStatus | str | None = None,
     revised: str | None = None,
-) -> SessionRecord | None:
+) -> PatchChangeResult:
     with _lock:
         rec = _sessions.get(session_id)
         if rec is None or rec.result is None:
@@ -77,6 +79,11 @@ def patch_change(
             if ch.id != change_id:
                 continue
             if revised is not None:
+                if (
+                    PolicyGuard().check_change(ch.model_copy(update={"revised": revised}))
+                    == PolicyAction.FORBIDDEN
+                ):
+                    return "forbidden"
                 ch.revised = revised
                 ch.status = ChangeStatus.ACCEPTED
             elif status is not None:
