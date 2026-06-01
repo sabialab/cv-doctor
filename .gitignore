@@ -59,3 +59,4 @@ out/
 # Cloudflare Worker
 .wrangler/
 .dev.vars
+server/uploads/
