@@ -24,6 +24,7 @@ export default function SessionPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [exportLink, setExportLink] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [confirmAcceptId, setConfirmAcceptId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -47,7 +48,16 @@ export default function SessionPage() {
 
   const stillAnalyzing = status === "pending" || status === "processing";
 
-  async function onAccept(changeId: string) {
+  async function onAccept(changeId: string, confirmed = false) {
+    const change = result?.changes.find((c) => c.id === changeId);
+    const needsGate =
+      change &&
+      (change.risk_level === "high" || change.requires_user_confirmation);
+    if (needsGate && !confirmed) {
+      setConfirmAcceptId(changeId);
+      return;
+    }
+    setConfirmAcceptId(null);
     setActionError(null);
     try {
       await patchChange(sessionId, changeId, "accepted");
@@ -58,6 +68,7 @@ export default function SessionPage() {
   }
 
   async function onReject(changeId: string) {
+    setConfirmAcceptId(null);
     setActionError(null);
     try {
       await patchChange(sessionId, changeId, "rejected");
@@ -208,21 +219,45 @@ export default function SessionPage() {
               <p className="mt-1 font-medium text-green-800">{ch.revised}</p>
               <p className="mt-2 text-neutral-600">{ch.reason}</p>
               <p className="mt-1 text-xs text-neutral-400">{ch.source_label}</p>
-              <div className="mt-3 flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => onAccept(ch.id)}
-                  className="rounded bg-green-700 px-3 py-1 text-xs text-white"
-                >
-                  采纳 {ch.status === "accepted" ? "✓" : ""}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onReject(ch.id)}
-                  className="rounded border border-neutral-300 px-3 py-1 text-xs"
-                >
-                  拒绝
-                </button>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {confirmAcceptId === ch.id ? (
+                  <>
+                    <p className="w-full text-xs text-amber-900">
+                      此为高风险修改，请确认内容属实后再采纳。
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => onAccept(ch.id, true)}
+                      className="min-h-[44px] rounded bg-green-700 px-3 py-2 text-xs text-white"
+                    >
+                      确认采纳
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmAcceptId(null)}
+                      className="min-h-[44px] rounded border border-neutral-300 px-3 py-2 text-xs"
+                    >
+                      取消
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => onAccept(ch.id)}
+                      className="min-h-[44px] rounded bg-green-700 px-3 py-2 text-xs text-white"
+                    >
+                      采纳 {ch.status === "accepted" ? "✓" : ""}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onReject(ch.id)}
+                      className="min-h-[44px] rounded border border-neutral-300 px-3 py-2 text-xs"
+                    >
+                      拒绝
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           ))}

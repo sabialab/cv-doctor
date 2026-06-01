@@ -27,7 +27,7 @@ CV-Doctor 是 **Web 优先的简历手术台**：用户上传简历（DOCX）并
 |--------|------|------|------|
 | 1 | [../CLAUDE.md](../CLAUDE.md) | Claude Code、本仓库默认 Agent | **最高标准**：Karpathy 行为准则、P0 实情、验证命令、PR/review |
 | 2 | [../AGENTS.md](../AGENTS.md) | Codex、Copilot、其他工具 | 摘要；与 `CLAUDE.md` 冲突时以 `CLAUDE.md` 为准 |
-| 3 | [../.cursor/rules/`](../.cursor/rules/) | Cursor IDE | 按 glob 自动注入（核心域、server、web、worker、信任边界） |
+| 3 | [`../.cursor/rules/`](../.cursor/rules/) | Cursor IDE | 按 glob 自动注入（核心域、server、web、worker、信任边界） |
 | 4 | [../CURSOR.md](../CURSOR.md) | Cursor 用户 | 如何在 Cursor 中启用上述规则 |
 | 5 | [../skills/karpathy-guidelines/SKILL.md](../skills/karpathy-guidelines/SKILL.md) | 可选全局技能 | 可复制到 `~/.cursor/skills/`，非 CV-Doctor 专属 |
 
