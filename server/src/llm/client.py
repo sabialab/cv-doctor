@@ -67,12 +67,23 @@ class LLMClient:
                 raw = response.choices[0].message.content or ""
                 data = json.loads(raw)
                 return schema.model_validate(data)
-            except (json.JSONDecodeError, ValidationError, IndexError, KeyError) as exc:
+            except ValidationError as exc:
                 last_err = exc
-                logger.warning("LLM JSON parse attempt %s failed: %s", attempt + 1, exc)
+                logger.warning(
+                    "LLM JSON parse attempt %s validation failed (%s field errors)",
+                    attempt + 1,
+                    len(exc.errors()),
+                )
+            except (json.JSONDecodeError, IndexError, KeyError) as exc:
+                last_err = exc
+                logger.warning(
+                    "LLM JSON parse attempt %s failed: %s",
+                    attempt + 1,
+                    type(exc).__name__,
+                )
             except Exception as exc:  # noqa: BLE001 — litellm raises varied types
                 last_err = exc
-                logger.warning("LLM call attempt %s failed: %s", attempt + 1, exc)
+                logger.warning("LLM call attempt %s failed: %s", attempt + 1, type(exc).__name__)
 
         raise LLMError("LLM 结构化输出失败，请稍后重试") from last_err
 

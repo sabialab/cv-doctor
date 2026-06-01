@@ -91,7 +91,7 @@ def build_stub_diagnosis() -> DiagnosisResult:
                 id=str(uuid.uuid4()),
                 section="skills",
                 original="熟悉 Python",
-                revised="Python（3+ 年），FastAPI，PostgreSQL",
+                revised="Python，FastAPI，PostgreSQL",
                 reason="补齐 JD 关键词与硬性要求。",
                 evidence_ids=["stub-evidence-skills"],
                 risk_level=ChangeRisk.LOW,

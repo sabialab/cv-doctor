@@ -22,6 +22,7 @@ from src.config import config
 from src.models import ChangeStatus
 from src.services.export_guard import exportable_changes
 from src.services.exporter_docx import apply_changes_to_docx
+from src.services.policy_guard import apply_policy_guard
 from src.services.session_store import (
     create_session,
     delete_session,
@@ -60,6 +61,10 @@ def _run_diagnosis(session_id: str) -> None:
             result = run_diagnosis(rec.resume_bytes, rec.jd_text)
         else:
             result = build_stub_diagnosis()
+            filtered, summary = apply_policy_guard(result.changes)
+            result = result.model_copy(
+                update={"changes": filtered, "policy_guard": summary}
+            )
         update_session(session_id, status="ready", result=result, error=None)
     except Exception as exc:  # noqa: BLE001 — P0 边界
         update_session(session_id, status="failed", error=str(exc))
