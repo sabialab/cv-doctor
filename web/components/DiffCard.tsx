@@ -102,7 +102,7 @@ export function DiffCard({
             {confirmSave ? (
               <>
                 <p className="w-full text-xs text-amber-900">
-                  此为需确认的修改，请核实内容属实后再保存采纳。
+                  此为需确认的修改，请核实内容属实后再保存；保存后仍需单独采纳。
                 </p>
                 <button
                   type="button"
