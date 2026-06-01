@@ -6,10 +6,35 @@
 
 ### 计划中（P0 后续）
 
-- 真实 DOCX 解析与 LLM 诊断流水线（替换 `stub_pipeline`）
-- DOCX 导出（替换 `.txt` 桩导出）
 - Cloudflare 生产部署：D1 + R2 + Container + Cron TTL
-- 样例简历/JD fixture 集与 Go–No-Go 指标
+- 持久化会话与 R2 简历存储
+- Go–No-Go 指标与更多 fixture 场景
+
+---
+
+## [0.2.0-p0] — 2026-06-01
+
+**Phase 1 诊断流水线**（[#2](https://github.com/sabialab/cv-doctor/pull/2) squash 合并至 `main`，`09fe8db`）。
+
+### Added
+
+- **真实流水线**（`USE_REAL_PIPELINE=1`）：DOCX 解析 → JD LLM 结构化 → 缺口分析 → 带 `evidence_ids` 的修改建议 → `PolicyGuard` → DOCX 导出
+- `server/src/pipeline.py`、`parser_resume.py`、`parser_jd.py`、`facts.py`、`gap_analyzer.py`、`change_generator.py`、`llm/client.py`
+- `exporter_docx.py`、`export_guard.py`；导出失败时若未匹配原文则 400
+- 桩模式与真实模式均经 `apply_policy_guard`；桩修改含占位 `evidence_ids`
+- **测试**：42 项 pytest（含 fixture 契约、export trust、LLM client mock）
+- `docs/fixtures/sample-resume.docx`；Agent PR 工作流（`pr-workflow.mdc`、CLAUDE §5–8）
+
+### Changed
+
+- 默认 CI/本地仍为桩流水线（`USE_REAL_PIPELINE=0`）
+- Worker 代理剥离 `content-encoding` / `content-length` 等易冲突头
+- CI Web/Worker 统一 Node 22
+
+### Security
+
+- HIGH 风险修改不可导出；无 `evidence_ids` 的修改由 PolicyGuard 拦截
+- LLM 日志不输出 ValidationError 原文（避免简历/JD 泄露）
 
 ---
 
@@ -88,6 +113,7 @@
 
 ---
 
+[0.2.0-p0]: https://github.com/sabialab/cv-doctor/compare/b8ee7f9...09fe8db
 [0.1.0-p0]: https://github.com/sabialab/cv-doctor/compare/623d50b...b8ee7f9
 [0.0.2]: https://github.com/sabialab/cv-doctor/compare/904e1f8...623d50b
 [0.0.1]: https://github.com/sabialab/cv-doctor/commit/904e1f8

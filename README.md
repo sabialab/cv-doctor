@@ -31,7 +31,9 @@ CV-Doctor 不同：
 
 访问 [cv-doctor.com](https://cv-doctor.com)（即将上线）
 
-### P0 MVP 本地运行（无登录，Stub 诊断）
+### P0 MVP 本地运行（无登录；默认 Stub，可选真实流水线）
+
+设置 `USE_REAL_PIPELINE=1` 与 `DEEPSEEK_API_KEY`（见 `server/.env.example`）可启用 DOCX 解析 + LLM 诊断；未设置时仍为桩数据便于联调。
 
 部署架构见 [docs/p0-cloudflare-stack.md](docs/p0-cloudflare-stack.md)；产品范围见 [docs/p0-mvp-implementation.md](docs/p0-mvp-implementation.md)。
 
@@ -47,7 +49,7 @@ cd worker && npm install && npm run dev
 # 此时 web/.env.local 改为 NEXT_PUBLIC_API_BASE=http://127.0.0.1:8788 且 NEXT_PUBLIC_API_PREFIX=/api
 ```
 
-测试：`cd server && uv sync --extra dev && uv run python -m pytest tests/test_api.py -q`
+测试：`cd server && uv sync --extra dev && uv run pytest -q`
 
 变更历史见 [CHANGELOG.md](CHANGELOG.md)。
 
