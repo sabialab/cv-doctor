@@ -56,6 +56,13 @@ def test_patch_rejects_revised_and_status_together():
     assert r.status_code == 422
 
 
+def test_patch_rejects_whitespace_only_revised():
+    client = TestClient(app)
+    sid, cid, _ = _ready_session(client)
+    r = client.patch(f"/sessions/{sid}/changes/{cid}", json={"revised": "   "})
+    assert r.status_code == 422
+
+
 def test_patch_status_only_reject():
     client = TestClient(app)
     sid, cid, _ = _ready_session(client)

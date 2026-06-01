@@ -106,7 +106,7 @@ export function DiffCard({
       ) : (
         <>
           <TextBlock label="原文" text={ch.original} />
-          <TextBlock label="建议" text={ch.revised} />
+          <TextBlock label="改文" text={ch.revised} />
           <p className="mt-2 text-neutral-600">{ch.reason}</p>
           <div className="mt-2 rounded bg-white/80 p-2 text-xs text-neutral-600">
             <p className="font-medium text-neutral-700">依据</p>
