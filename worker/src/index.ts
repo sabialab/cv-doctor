@@ -28,7 +28,8 @@ app.get("/health", (c) => c.json({ status: "ok", layer: "worker" }));
 app.all("/api/*", async (c) => {
   const base = c.env.PIPELINE_URL?.replace(/\/$/, "") || "http://127.0.0.1:8787";
   const path = c.req.path.replace(/^\/api/, "") || "/";
-  const url = `${base}${path}${c.req.query() ? `?${new URL(c.req.url).searchParams}` : ""}`;
+  const search = new URL(c.req.url).search;
+  const url = `${base}${path}${search}`;
 
   const headers = new Headers(c.req.raw.headers);
   headers.delete("host");
@@ -43,11 +44,15 @@ app.all("/api/*", async (c) => {
     init.duplex = "half";
   }
 
-  const upstream = await fetch(url, init);
-  return new Response(upstream.body, {
-    status: upstream.status,
-    headers: upstream.headers,
-  });
+  try {
+    const upstream = await fetch(url, init);
+    return new Response(upstream.body, {
+      status: upstream.status,
+      headers: upstream.headers,
+    });
+  } catch {
+    return c.text("上游服务不可用", 502);
+  }
 });
 
 export default app;

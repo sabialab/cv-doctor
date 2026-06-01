@@ -30,7 +30,7 @@
        → 同步调用 Container / 或 Queue 投递后轮询
             → Python：解析 DOCX、JD 抽取、LLM、PolicyGuard
        → 读 D1 + R2，返回 DiagnosisResult JSON
-  → 结果页 /s/[id] 轮询 GET /sessions/{id} 直至 status=ready
+  → 结果页 /s/[id] 轮询 GET /sessions/{id} 直至 status=ready（或 failed）
 ```
 
 **为何保留 Python 容器：** 现有 `server/src/models.py` 与后续 `python-docx` 逻辑已在 Python；在 Worker 里重写成本过高。Container 与 Worker 同属 Cloudflare 账单，仍算「全 CF」。
@@ -77,7 +77,7 @@ cd web && npm i && npm run dev
 
 ## 6. 上线检查（CF 特有）
 
-- [ ] R2 生命周期规则：前缀 `sessions/` 与 `AUTO_DELETE_HOURS` 一致
+- [ ] R2 生命周期规则：前缀 `uploads/`（及导出子路径）与 `AUTO_DELETE_HOURS` 一致
 - [ ] D1 迁移脚本纳入 CI（`wrangler d1 migrations apply`）
 - [ ] Container 镜像在 `wrangler deploy` 流水线构建
 - [ ] Pages 环境变量 `NEXT_PUBLIC_API_BASE` 指向生产 Worker

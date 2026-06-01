@@ -4,10 +4,10 @@ WORKDIR /app
 
 RUN pip install uv
 
-COPY pyproject.toml README.md ./
+COPY pyproject.toml uv.lock README.md ./
 COPY src ./src
 
-RUN uv sync --no-dev
+RUN uv sync --no-dev --frozen
 
 ENV STORAGE_PATH=/data/uploads
 RUN mkdir -p /data/uploads

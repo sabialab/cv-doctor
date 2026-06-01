@@ -53,7 +53,7 @@ class ChangeRisk(str, Enum):
 
     LOW = "low"             # 改写表达、调整顺序
     MEDIUM = "medium"       # 数字化成果、技术深度提升
-    HIGH = "high"           # 责任范围扩大、 新技能加入
+    HIGH = "high"           # 责任范围扩大、新技能加入
 
 
 class ChangeStatus(str, Enum):

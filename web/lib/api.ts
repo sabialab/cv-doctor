@@ -94,3 +94,11 @@ export async function exportSession(sessionId: string): Promise<{ download_url: 
 export function exportDownloadUrl(sessionId: string, path: string): string {
   return apiUrl(path);
 }
+
+export async function deleteSession(sessionId: string): Promise<void> {
+  const res = await fetch(apiUrl(`/sessions/${sessionId}`), { method: "DELETE" });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail || "删除失败");
+  }
+}

@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import {
+  deleteSession,
   exportDownloadUrl,
   exportSession,
   getSession,
@@ -15,11 +16,14 @@ import {
 
 export default function SessionPage() {
   const params = useParams();
+  const router = useRouter();
   const sessionId = params.id as string;
   const [status, setStatus] = useState<SessionStatus>("pending");
   const [result, setResult] = useState<DiagnosisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [exportLink, setExportLink] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -28,6 +32,7 @@ export default function SessionPage() {
       setResult(data.result);
       setError(data.error);
     } catch (e) {
+      setStatus("failed");
       setError(e instanceof Error ? e.message : "加载失败");
     }
   }, [sessionId]);
@@ -43,21 +48,45 @@ export default function SessionPage() {
   const stillAnalyzing = status === "pending" || status === "processing";
 
   async function onAccept(changeId: string) {
-    await patchChange(sessionId, changeId, "accepted");
-    await load();
+    setActionError(null);
+    try {
+      await patchChange(sessionId, changeId, "accepted");
+      await load();
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "采纳失败");
+    }
   }
 
   async function onReject(changeId: string) {
-    await patchChange(sessionId, changeId, "rejected");
-    await load();
+    setActionError(null);
+    try {
+      await patchChange(sessionId, changeId, "rejected");
+      await load();
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "拒绝失败");
+    }
   }
 
   async function onExport() {
+    setActionError(null);
     try {
       const { download_url } = await exportSession(sessionId);
       setExportLink(exportDownloadUrl(sessionId, download_url));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "导出失败");
+      setActionError(e instanceof Error ? e.message : "导出失败");
+    }
+  }
+
+  async function onDelete() {
+    setDeleting(true);
+    setActionError(null);
+    try {
+      await deleteSession(sessionId);
+      router.push("/");
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "删除失败");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -82,7 +111,6 @@ export default function SessionPage() {
 
   const jd = result.jd_interpretation;
   const ms = result.match_score;
-
   const pg = result.policy_guard;
 
   return (
@@ -92,11 +120,24 @@ export default function SessionPage() {
           分析进行中，页面将自动刷新…
         </p>
       )}
-      <div className="flex items-center justify-between gap-4">
+      {actionError && (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">{actionError}</p>
+      )}
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">诊断结果</h1>
-        <Link href="/" className="text-sm text-neutral-600 underline">
-          新诊断
-        </Link>
+        <div className="flex gap-3 text-sm">
+          <Link href="/" className="text-neutral-600 underline">
+            新诊断
+          </Link>
+          <button
+            type="button"
+            onClick={onDelete}
+            disabled={deleting}
+            className="text-red-700 underline disabled:opacity-50"
+          >
+            {deleting ? "删除中…" : "删除本会话"}
+          </button>
+        </div>
       </div>
 
       <section className="rounded-xl border border-neutral-200 p-5">
@@ -154,7 +195,15 @@ export default function SessionPage() {
         <div className="mt-4 space-y-4">
           {result.changes.map((ch) => (
             <div key={ch.id} className="rounded-lg bg-neutral-50 p-4 text-sm">
-              <p className="font-medium text-neutral-500">{ch.section}</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-medium text-neutral-500">{ch.section}</p>
+                {(ch.risk_level === "medium" || ch.risk_level === "high") && (
+                  <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-900">
+                    风险：{ch.risk_level}
+                    {ch.requires_user_confirmation ? "（建议确认）" : ""}
+                  </span>
+                )}
+              </div>
               <p className="mt-2 line-through text-neutral-500">{ch.original}</p>
               <p className="mt-1 font-medium text-green-800">{ch.revised}</p>
               <p className="mt-2 text-neutral-600">{ch.reason}</p>

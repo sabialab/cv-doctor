@@ -40,8 +40,11 @@ export default function HomePage() {
 
       <form onSubmit={onSubmit} className="mt-8 space-y-6">
         <div>
-          <label className="block text-sm font-medium">简历（.docx）</label>
+          <label htmlFor="resume-file" className="block text-sm font-medium">
+            简历（.docx）
+          </label>
           <input
+            id="resume-file"
             type="file"
             accept=".docx"
             className="mt-1 block w-full text-sm"
@@ -49,8 +52,11 @@ export default function HomePage() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium">岗位描述（粘贴）</label>
+          <label htmlFor="jd-text" className="block text-sm font-medium">
+            岗位描述（粘贴）
+          </label>
           <textarea
+            id="jd-text"
             className="mt-1 h-40 w-full rounded-lg border border-neutral-300 p-3 text-sm"
             placeholder="粘贴 JD 全文…"
             value={jdText}
@@ -72,7 +78,7 @@ export default function HomePage() {
         <Link href="/privacy" className="underline">
           隐私说明
         </Link>
-        。数据约 24 小时后自动删除，不用于模型训练。
+        。计划在后续版本配置自动删除（TTL）；当前可在结果页手动删除。不用于模型训练。
       </p>
     </main>
   );

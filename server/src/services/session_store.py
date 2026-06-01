@@ -57,6 +57,18 @@ def update_session(session_id: str, **kwargs: object) -> SessionRecord | None:
         return rec
 
 
+def patch_change(session_id: str, change_id: str, status: str) -> SessionRecord | None:
+    with _lock:
+        rec = _sessions.get(session_id)
+        if rec is None or rec.result is None:
+            return None
+        for ch in rec.result.changes:
+            if ch.id == change_id:
+                ch.status = status
+                return rec
+        return None
+
+
 def delete_session(session_id: str) -> bool:
     with _lock:
         return _sessions.pop(session_id, None) is not None
