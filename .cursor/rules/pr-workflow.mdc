@@ -1,0 +1,33 @@
+---
+description: GitHub PR workflow — branch per phase, squash merge, CI, reviews, CodeRabbit, release sync.
+alwaysApply: true
+---
+
+# GitHub PR Workflow
+
+Canonical detail: [`CLAUDE.md` §5–6](CLAUDE.md). Karpathy principles: [`karpathy-guidelines.mdc`](karpathy-guidelines.mdc) (**first priority**).
+
+## Before opening a PR
+
+1. Branch from `origin/main` (one MVP phase per branch) — see `CLAUDE.md` §5.1
+2. Run local CodeRabbit: `cr review --base main --plain` — **P1/P2 must be 0** before push
+3. Run verification commands for touched areas (`CLAUDE.md` §4)
+
+## While fixing review
+
+- Read **thread-aware** / unresolved review context first; decide what is actionable
+- Do not resolve GitHub threads unless the user asks
+- After push: wait for key CI checks; report pass/fail with evidence
+
+## After merge to `main` (Squash and merge only)
+
+- Update `README.md`, `CHANGELOG.md`, `web/package.json` + `web/package-lock.json`, `worker/package.json` + `worker/package-lock.json`, and `server/pyproject.toml` version when releasing
+- `git checkout main && git pull origin main` — local `main` must not lag; working tree clean
+
+## Reviews on PR
+
+```bash
+gh pr comment <N> --body $'@copilot review\n@codex review'
+```
+
+Required after creating a PR or pushing fixes. Exception: user explicitly merging to `main` without extra review round.

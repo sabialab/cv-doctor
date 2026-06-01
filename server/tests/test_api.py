@@ -20,7 +20,10 @@ def test_session_flow_stub():
     from docx import Document
 
     buf = BytesIO()
-    Document().save(buf)
+    doc = Document()
+    doc.add_paragraph("负责后端开发与维护。")
+    doc.add_paragraph("熟悉 Python")
+    doc.save(buf)
     buf.seek(0)
     mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     files = {"resume": ("resume.docx", buf.read(), mime)}
@@ -45,12 +48,11 @@ def test_session_flow_stub():
 
     e = client.post(f"/sessions/{sid}/export")
     assert e.status_code == 200
-    assert e.json()["format"] == "txt"
+    assert e.json()["format"] == "docx"
     dl = e.json()["download_url"]
     down = client.get(dl)
     assert down.status_code == 200
-    assert "text/plain" in down.headers.get("content-type", "")
-    assert "改后" in down.text
+    assert "wordprocessingml" in down.headers.get("content-type", "")
 
     d = client.delete(f"/sessions/{sid}")
     assert d.status_code == 200

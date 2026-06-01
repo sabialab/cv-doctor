@@ -24,6 +24,27 @@ app.use("*", async (c, next) => {
 
 app.get("/health", (c) => c.json({ status: "ok", layer: "worker" }));
 
+const _HOP_BY_HOP_HEADERS = [
+  "connection",
+  "keep-alive",
+  "proxy-authenticate",
+  "proxy-authorization",
+  "te",
+  "trailer",
+  "transfer-encoding",
+  "upgrade",
+];
+
+function sanitizeUpstreamHeaders(upstream: Headers): Headers {
+  const headers = new Headers(upstream);
+  for (const key of _HOP_BY_HOP_HEADERS) {
+    headers.delete(key);
+  }
+  headers.delete("content-encoding");
+  headers.delete("content-length");
+  return headers;
+}
+
 /** 将 /api/* 转发到 Python 流水线（P0 本地与容器同路径） */
 app.all("/api/*", async (c) => {
   const base = c.env.PIPELINE_URL?.replace(/\/$/, "") || "http://127.0.0.1:8787";
@@ -48,7 +69,7 @@ app.all("/api/*", async (c) => {
     const upstream = await fetch(url, init);
     return new Response(upstream.body, {
       status: upstream.status,
-      headers: upstream.headers,
+      headers: sanitizeUpstreamHeaders(upstream.headers),
     });
   } catch {
     return c.text("上游服务不可用", 502);

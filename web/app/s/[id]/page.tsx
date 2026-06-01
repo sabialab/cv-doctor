@@ -185,8 +185,32 @@ export default function SessionPage() {
       </section>
 
       <section className="rounded-xl border border-neutral-200 p-5">
-        <h2 className="text-lg font-medium">3. 缺口</h2>
-        <p className="mt-2 text-sm">共 {result.gap_report.total_gaps} 项</p>
+        <h2 className="text-lg font-medium">3. 匹配与缺口</h2>
+        {result.gap_report.matched.length > 0 && (
+          <>
+            <p className="mt-2 text-sm font-medium text-green-800">已匹配</p>
+            <ul className="mt-1 space-y-1 text-sm">
+              {result.gap_report.matched.map((m, i) => (
+                <li key={`m-${i}`} className="rounded bg-green-50 p-2">
+                  {m}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+        {result.gap_report.partial_match.length > 0 && (
+          <>
+            <p className="mt-3 text-sm font-medium text-amber-800">部分匹配</p>
+            <ul className="mt-1 space-y-2 text-sm">
+              {result.gap_report.partial_match.map((g, i) => (
+                <li key={`pt-${i}`} className="rounded bg-amber-50 p-2">
+                  <strong>{g.requirement}</strong> — {g.suggestion}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+        <p className="mt-3 text-sm">缺口共 {result.gap_report.total_gaps} 项</p>
         <ul className="mt-2 space-y-2 text-sm">
           {result.gap_report.hard_missing.map((g, i) => (
             <li key={`hm-${i}`} className="rounded bg-red-50 p-2">

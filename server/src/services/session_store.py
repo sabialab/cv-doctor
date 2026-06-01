@@ -27,6 +27,7 @@ class SessionRecord:
 
 _lock = threading.Lock()
 _sessions: dict[str, SessionRecord] = {}
+_SESSION_FIELDS = frozenset(SessionRecord.__dataclass_fields__)
 
 
 def create_session(*, resume_bytes: bytes, jd_text: str) -> SessionRecord:
@@ -53,6 +54,8 @@ def update_session(session_id: str, **kwargs: object) -> SessionRecord | None:
         if rec is None:
             return None
         for key, value in kwargs.items():
+            if key not in _SESSION_FIELDS:
+                raise ValueError(f"未知会话字段: {key}")
             setattr(rec, key, value)
         return rec
 

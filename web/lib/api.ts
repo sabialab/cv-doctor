@@ -23,6 +23,8 @@ export interface DiagnosisResult {
     breakdown: Record<string, number>;
   };
   gap_report: {
+    matched: string[];
+    partial_match: { requirement: string; severity: string; suggestion: string }[];
     hard_missing: { requirement: string; severity: string; suggestion: string }[];
     preferred_missing: { requirement: string; severity: string; suggestion: string }[];
     keyword_missing: string[];
@@ -34,6 +36,7 @@ export interface DiagnosisResult {
     original: string;
     revised: string;
     reason: string;
+    evidence_ids: string[];
     risk_level: string;
     status: string;
     requires_user_confirmation: boolean;

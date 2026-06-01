@@ -33,7 +33,7 @@ class ChangePatchResponse(BaseModel):
 
 class ExportResponse(BaseModel):
     download_url: str
-    format: Literal["txt"] = "txt"
+    format: Literal["txt", "docx"] = "docx"
 
 
 class PrivacyResponse(BaseModel):
@@ -56,6 +56,10 @@ def diagnosis_result_for_api(result: DiagnosisResult) -> dict[str, Any]:
             "breakdown": result.match_score.breakdown,
         },
         "gap_report": {
+            "matched": result.gap_report.matched,
+            "partial_match": [
+                g.model_dump(mode="json") for g in result.gap_report.partial_match
+            ],
             "hard_missing": [g.model_dump(mode="json") for g in result.gap_report.hard_missing],
             "preferred_missing": [
                 g.model_dump(mode="json") for g in result.gap_report.preferred_missing
@@ -70,6 +74,7 @@ def diagnosis_result_for_api(result: DiagnosisResult) -> dict[str, Any]:
                 "original": c.original,
                 "revised": c.revised,
                 "reason": c.reason,
+                "evidence_ids": c.evidence_ids,
                 "risk_level": c.risk_level.value
                 if hasattr(c.risk_level, "value")
                 else str(c.risk_level),

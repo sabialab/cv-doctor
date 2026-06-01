@@ -38,9 +38,20 @@ jobs:
             src/api \
             src/main.py \
             src/p0_models.py \
+            src/config.py \
+            src/pipeline.py \
+            src/parser_resume.py \
+            src/parser_jd.py \
+            src/facts.py \
+            src/gap_analyzer.py \
+            src/change_generator.py \
+            src/llm \
             src/services/session_store.py \
             src/services/stub_pipeline.py \
-            tests/test_api.py
+            src/services/policy_guard.py \
+            src/services/export_guard.py \
+            src/services/exporter_docx.py \
+            tests/
 
       - name: Pytest
         run: uv run pytest -q
@@ -57,7 +68,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
           cache-dependency-path: web/package-lock.json
 
