@@ -1,0 +1,49 @@
+---
+description: CV-Doctor project identity, doc hierarchy, P0 scope, stack, and what not to build.
+alwaysApply: true
+---
+
+# CV-Doctor — Project Core
+
+## Identity
+
+- **Product:** 简历对症下药 — paste JD, get an auditable resume surgery list (not a rewrite bot).
+- **Users:** Chinese white-collar / fresh grads; mobile-first Web.
+- **Locale:** User-facing copy `zh-CN`; technical docs may be English.
+
+## Doc hierarchy
+
+1. `docs/p0-mvp-implementation.md` — **what to build now**
+2. `PLAN.md` — long-term vision (do not implement P1/P2 unless asked)
+3. `docs/mvp-feasibility.md` — constraints and risks
+4. `server/src/models.py` — domain schema source of truth
+
+## P0 user journey (do not reorder result UX)
+
+Upload DOCX resume → paste JD → diagnose → show ≤3 free diff cards → accept/reject → export DOCX.
+
+Result page order:
+
+1. JD plain summary
+2. Matched / partial / missing requirements
+3. Surgery suggestions (with risk)
+4. Match score (secondary)
+
+## Explicit non-goals for default implementation
+
+- Resume generation from scratch
+- BOSS/拉勾/猎聘 auto-scrape (P1)
+- 天眼查 / company profile (P1)
+- Kimi K2.6 surgery reports (P1)
+- Paid export / accounts (P2)
+- CLI as primary user interface
+
+## Stack (fixed for P0)
+
+- Backend: FastAPI + LiteLLM + python-docx
+- Frontend: Next.js 15 + Tailwind 4
+- Models: DeepSeek V4 Flash via env config
+
+## Cross-references
+
+Full agent instructions: `CLAUDE.md`, `AGENTS.md`. Trust rules: `llm-trust-boundary.mdc`.

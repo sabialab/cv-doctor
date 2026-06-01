@@ -1,0 +1,35 @@
+---
+description: Non-negotiable anti-hallucination and PolicyGuard rules for resume/JD LLM features.
+alwaysApply: true
+---
+
+# LLM Trust Boundary
+
+CV-Doctor fails if the model invents experience. Treat this as **security + product** requirements, not polish.
+
+## Hard rules
+
+1. **No fabricated facts** — employers, dates, metrics, skills, certifications not grounded in resume or user-confirmed input.
+2. **Evidence chain** — each `Change` in schema should reference `evidence_ids` when the pipeline supports it.
+3. **PolicyGuard** — implement rules aligned with `PolicyGuard` / `PolicyAction` in `server/src/models.py`:
+   - `FORBIDDEN` → block suggestion or export
+   - `NEEDS_CONFIRMATION` → require explicit user accept
+   - `ALLOWED` → may proceed with normal UX
+4. **High-risk changes** (`ChangeRisk.HIGH`) — never auto-apply on export; always explicit opt-in.
+5. **Missing JD items** — output as 补充建议 / gap list only; never inject as resume facts.
+6. **Structured output** — parse LLM JSON with Pydantic; retry on failure; do not strip safety fields to "make it work".
+
+## Prompting
+
+- System prompts must state: 不编造未提供的经历；不确定则标注需用户确认.
+- Prefer low temperature for extraction/diagnosis; document temperature in LLM client module.
+- Log prompt version ids in code comments when changing prompts (not user PII).
+
+## Review checklist (before merging LLM changes)
+
+- [ ] Can the model add a skill the user never had?
+- [ ] Can export include rejected or unaccepted changes?
+- [ ] Are high-risk edits possible without a second confirmation step?
+- [ ] Is raw resume/JD sent to logs or third-party analytics?
+
+If any answer is wrong, fix before merge.

@@ -1,0 +1,34 @@
+---
+description: Next.js frontend — mobile-first P0 flows, Chinese copy, API types aligned with server.
+globs: web/**/*
+alwaysApply: false
+---
+
+# Web (Next.js)
+
+## P0 pages
+
+1. Landing — value prop + privacy note (24h delete)
+2. Workspace — upload DOCX + JD textarea + submit
+3. Result — diagnosis order per `cv-doctor-core` (JD summary → gaps → diffs → score)
+4. Export — download DOCX; gate on accepted changes only
+
+## UX rules
+
+- Mobile-first; min touch target 44px; test ~375px width.
+- Copy in Simplified Chinese; honest tone (no "一键上岸" overclaim).
+- Show loading states for LLM steps (15–30s); partial progress if possible.
+- Diff cards must show: 原文, 改文, 依据, 风险 — not a single blob of text.
+- High-risk card: extra confirm before accept.
+
+## Code
+
+- TypeScript strict; align types with server Pydantic models.
+- Use App Router patterns already in `web/package.json`.
+- API base URL via env (`NEXT_PUBLIC_API_URL`).
+- No secrets in client bundle.
+
+## Verification
+
+- `npm run build` after non-trivial changes.
+- Smoke: upload → result → toggle accept → export when wired to backend.

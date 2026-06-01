@@ -1,0 +1,41 @@
+---
+description: FastAPI backend conventions — models, services, LLM client, tests.
+globs: server/**/*
+alwaysApply: false
+---
+
+# Server (Python / FastAPI)
+
+## Layout (target per P0 plan)
+
+```text
+server/src/
+  main.py           # FastAPI app, routes
+  models.py         # Domain models — extend here first
+  services/         # parser, jd, gap, changes, export, llm_client
+  storage/          # Session file I/O
+```
+
+## Conventions
+
+- Python 3.11+; Pydantic v2 for all API schemas.
+- Ruff per `docs/contributing.md`; run `pytest` for touched logic.
+- LLM access only through `llm_client` (or `services/llm_client.py`) — no scattered `openai` calls.
+- File upload: validate MIME/size; store under session id; no permanent storage without TTL design.
+- Export: apply **only** user-accepted `Change` ids; DOCX via python-docx.
+
+## Testing expectations
+
+Add tests when changing:
+
+- Resume/JD parsers
+- Policy guard evaluation
+- Change generation merge / export
+- Session API contracts
+
+## Dependencies
+
+- LiteLLM + env vars (`DEEPSEEK_API_KEY`, etc.) — never commit keys.
+- Optional: `python-docx`, `httpx`, `pydantic-settings`
+
+Do not add heavy frameworks (Celery, SQLAlchemy) unless P0 plan is updated and user agrees.
