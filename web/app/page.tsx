@@ -35,7 +35,8 @@ export default function HomePage() {
     <main className="mx-auto max-w-2xl px-4 py-12">
       <h1 className="text-3xl font-semibold tracking-tight">CV Doctor</h1>
       <p className="mt-2 text-neutral-600">
-        上传简历（DOCX）并粘贴岗位描述，获取匹配诊断与修改建议（P0 桩数据联调）。
+        上传简历（DOCX）并粘贴岗位描述，获取匹配诊断与可审阅的修改建议。本地默认联调模式；配置
+        USE_REAL_PIPELINE=1 与 DEEPSEEK_API_KEY 后启用真实分析（见 server/.env.example）。
       </p>
 
       <form onSubmit={onSubmit} className="mt-8 space-y-6">
@@ -57,7 +58,7 @@ export default function HomePage() {
           </label>
           <textarea
             id="jd-text"
-            className="mt-1 h-40 w-full rounded-lg border border-neutral-300 p-3 text-sm"
+            className="mt-1 h-40 w-full rounded-lg border border-neutral-300 p-3 text-base"
             placeholder="粘贴 JD 全文…"
             value={jdText}
             onChange={(e) => setJdText(e.target.value)}
@@ -78,7 +79,7 @@ export default function HomePage() {
         <Link href="/privacy" className="underline">
           隐私说明
         </Link>
-        。计划在后续版本配置自动删除（TTL）；当前可在结果页手动删除。不用于模型训练。
+        。诊断会调用第三方云模型（DeepSeek）；结果页可手动删除本次数据。不用于模型训练。
       </p>
     </main>
   );

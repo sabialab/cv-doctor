@@ -47,6 +47,7 @@ export interface DiagnosisResult {
     blocked_count: number;
     warnings: string[];
   };
+  free_change_limit?: number;
 }
 
 export async function createSession(resume: File, jdText: string): Promise<{ session_id: string }> {
@@ -66,26 +67,37 @@ export async function getSession(sessionId: string): Promise<{
   status: SessionStatus;
   result: DiagnosisResult | null;
   error: string | null;
+  processing_step?: string | null;
 }> {
   const res = await fetch(apiUrl(`/sessions/${sessionId}`));
   if (!res.ok) throw new Error("会话不存在或已过期");
   return res.json();
 }
 
+export type ChangePatchBody = {
+  status?: "accepted" | "rejected" | "pending";
+  revised?: string;
+};
+
 export async function patchChange(
   sessionId: string,
   changeId: string,
-  status: "accepted" | "rejected" | "pending",
+  body: ChangePatchBody,
 ): Promise<void> {
   const res = await fetch(apiUrl(`/sessions/${sessionId}/changes/${changeId}`), {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ status }),
+    body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error("更新失败");
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { detail?: string }).detail || "更新失败");
+  }
 }
 
-export async function exportSession(sessionId: string): Promise<{ download_url: string }> {
+export async function exportSession(
+  sessionId: string,
+): Promise<{ download_url: string; format: "docx" | "txt" }> {
   const res = await fetch(apiUrl(`/sessions/${sessionId}/export`), { method: "POST" });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));

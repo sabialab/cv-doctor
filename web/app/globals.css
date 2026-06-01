@@ -10,3 +10,7 @@ body {
   color: var(--foreground);
   font-family: system-ui, sans-serif;
 }
+
+main {
+  overflow-x: hidden;
+}
