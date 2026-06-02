@@ -45,7 +45,7 @@ SUPERPOWERS_SKILLS_SRC=/tmp/superpowers/skills ./scripts/install-superpowers-ski
 | Path | Purpose |
 |------|---------|
 | `docs/superpowers/specs/` | Approved design specs (`brainstorming` output) |
-| `docs/superpowers/plans/` | Implementation plans (`writing-plans` output); **active:** [2026-06-01-p0-m2-frontend-closure.md](./plans/2026-06-01-p0-m2-frontend-closure.md) |
+| `docs/superpowers/plans/` | Implementation plans (`writing-plans` output); **active:** [2026-06-02-p0-m3-privacy-stability-launch.md](./plans/2026-06-02-p0-m3-privacy-stability-launch.md) |
 | `.cursor/rules/superpowers.mdc` | Skill routing (always apply) |
 | `CLAUDE.md` §0 | When to call which skill |
 
