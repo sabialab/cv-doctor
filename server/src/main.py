@@ -74,6 +74,7 @@ def _run_diagnosis(session_id: str) -> None:
             result = run_diagnosis(
                 rec.resume_bytes,
                 rec.jd_text,
+                resume_text=rec.resume_text,
                 on_step=lambda s: _progress(session_id, s),
             )
         else:
@@ -109,22 +110,35 @@ def health() -> dict[str, str]:
 @app.post("/sessions", response_model=SessionCreateResponse)
 async def create_session_route(
     background_tasks: BackgroundTasks,
-    resume: UploadFile = File(...),
+    resume: UploadFile | None = File(default=None),
+    resume_text: str = Form(""),
     jd_text: str = Form(""),
     consent: str = Form(""),
 ) -> SessionCreateResponse:
     if not _consent_granted(consent):
         raise HTTPException(400, detail="请先同意隐私说明后再上传")
-    if not resume.filename or not resume.filename.lower().endswith(".docx"):
-        raise HTTPException(400, detail="仅支持 .docx 简历")
     if not jd_text.strip():
         raise HTTPException(400, detail="请粘贴岗位描述")
 
-    data = await resume.read()
-    if len(data) > 10 * 1024 * 1024:
-        raise HTTPException(400, detail="文件超过 10MB")
+    pasted = resume_text.strip()
+    has_file = resume is not None and bool(resume.filename)
+    if not has_file and not pasted:
+        raise HTTPException(400, detail="请上传 .docx 或粘贴简历全文")
 
-    record = _repo().create_session(resume_bytes=data, jd_text=jd_text.strip())
+    data = b""
+    if has_file:
+        assert resume is not None
+        if not resume.filename or not resume.filename.lower().endswith(".docx"):
+            raise HTTPException(400, detail="仅支持 .docx 简历")
+        data = await resume.read()
+        if len(data) > 10 * 1024 * 1024:
+            raise HTTPException(400, detail="文件超过 10MB")
+
+    record = _repo().create_session(
+        resume_bytes=data,
+        jd_text=jd_text.strip(),
+        resume_text=pasted or None,
+    )
     background_tasks.add_task(_run_diagnosis, record.session_id)
     return SessionCreateResponse(session_id=record.session_id, status=record.status)
 
