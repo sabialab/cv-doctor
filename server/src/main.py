@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
@@ -26,6 +26,12 @@ from src.services.diagnosis_errors import user_facing_diagnosis_error
 from src.services.export_guard import exportable_changes
 from src.services.exporter_docx import apply_changes_to_docx
 from src.services.policy_guard import apply_policy_guard
+from src.services.rate_limit import (
+    RateLimitExceeded,
+    check_session_create_rate_limit,
+    client_ip,
+    should_apply_rate_limit,
+)
 from src.services.stub_pipeline import build_stub_diagnosis
 
 configure_logging()
@@ -109,12 +115,19 @@ def health() -> dict[str, str]:
 
 @app.post("/sessions", response_model=SessionCreateResponse)
 async def create_session_route(
+    request: Request,
     background_tasks: BackgroundTasks,
     resume: UploadFile | None = File(default=None),
     resume_text: str = Form(""),
     jd_text: str = Form(""),
     consent: str = Form(""),
 ) -> SessionCreateResponse:
+    if should_apply_rate_limit(request):
+        try:
+            check_session_create_rate_limit(client_ip(request))
+        except RateLimitExceeded as exc:
+            raise HTTPException(429, detail=exc.detail) from exc
+
     if not _consent_granted(consent):
         raise HTTPException(400, detail="请先同意隐私说明后再上传")
     if not jd_text.strip():

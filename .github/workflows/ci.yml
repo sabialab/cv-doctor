@@ -55,6 +55,7 @@ jobs:
             src/services/policy_guard.py \
             src/services/export_guard.py \
             src/services/exporter_docx.py \
+            src/services/rate_limit.py \
             tests/
 
       - name: Pytest

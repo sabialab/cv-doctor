@@ -64,7 +64,8 @@ export async function createSession(
   const res = await fetch(apiUrl("/sessions"), { method: "POST", body: form });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(apiErrorMessage(err, res.statusText));
+    const fallback = res.status === 429 ? "今日创建会话次数已达上限" : res.statusText;
+    throw new Error(apiErrorMessage(err, fallback));
   }
   return res.json();
 }
