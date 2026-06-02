@@ -29,6 +29,10 @@ def test_purge_expired_deletes_session_and_export_file(tmp_path):
 def test_purge_expired_keeps_recent_sessions():
     repo = memory_repository()
     rec = repo.create_session(resume_bytes=b"x", jd_text="jd")
-    before = datetime.now(UTC) - timedelta(hours=24)
-    assert repo.purge_expired(before) == 0
-    assert repo.get_session(rec.session_id) is not None
+    try:
+        before = datetime.now(UTC) - timedelta(hours=24)
+        assert repo.purge_expired(before) == 0
+        assert repo.get_session(rec.session_id) is not None
+    finally:
+        repo.clear_export_file(rec.session_id)
+        repo.delete_session(rec.session_id)

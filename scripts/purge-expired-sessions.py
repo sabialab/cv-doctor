@@ -24,7 +24,11 @@ def main() -> int:
         hours = 24
 
     before = datetime.now(UTC) - timedelta(hours=hours)
-    repo = get_repository()
+    try:
+        repo = get_repository()
+    except NotImplementedError as exc:
+        print(f"purge-expired-sessions: {exc}", file=sys.stderr)
+        return 1
     count = repo.purge_expired(before)
     print(f"Purged {count} session(s) created before {before.isoformat()} (>{hours}h ago)")
     return 0
