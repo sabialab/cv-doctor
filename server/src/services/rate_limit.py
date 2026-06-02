@@ -27,7 +27,11 @@ def _day_key() -> str:
 
 
 def _limit() -> int:
-    return int(os.getenv("RATE_LIMIT_SESSIONS_PER_DAY", "20"))
+    raw = os.getenv("RATE_LIMIT_SESSIONS_PER_DAY", "20")
+    try:
+        return int(raw)
+    except ValueError:
+        return 20
 
 
 def should_apply_rate_limit(request: Request) -> bool:

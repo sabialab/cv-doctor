@@ -49,8 +49,24 @@ class RedactingFilter(logging.Filter):
         return True
 
 
+def _has_redacting_filter(filters: list[logging.Filter]) -> bool:
+    return any(isinstance(f, RedactingFilter) for f in filters)
+
+
 def configure_logging() -> None:
+    """Attach redaction to root handlers (and root) so named loggers are scrubbed."""
     root = logging.getLogger()
-    if any(isinstance(f, RedactingFilter) for f in root.filters):
-        return
-    root.addFilter(RedactingFilter())
+    filt = RedactingFilter()
+
+    if not root.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter("%(levelname)s %(name)s: %(message)s"))
+        root.addHandler(handler)
+        root.setLevel(logging.INFO)
+
+    for handler in root.handlers:
+        if not _has_redacting_filter(list(handler.filters)):
+            handler.addFilter(filt)
+
+    if not _has_redacting_filter(list(root.filters)):
+        root.addFilter(filt)

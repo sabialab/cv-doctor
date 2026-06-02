@@ -6,3 +6,5 @@ Production/staging server logs use `RedactingFilter` (`server/src/logging_config
 - Plain log messages longer than 80 chars are truncated.
 
 Task 11 `docs/deploy-p0-m3.md` §Operations should reference this note when the runbook is written.
+
+**Worker rate limit (P0):** `worker/src/rate_limit.ts` uses an in-memory counter per isolate (not shared across cold starts). Treat as best-effort at the edge; durable KV/D1 is a follow-up if strict global caps are required.

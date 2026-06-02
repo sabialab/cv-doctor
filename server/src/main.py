@@ -24,7 +24,7 @@ from src.models import ChangeStatus
 from src.repositories.session import get_repository
 from src.services.diagnosis_errors import user_facing_diagnosis_error
 from src.services.export_guard import exportable_changes
-from src.services.exporter_docx import apply_changes_to_docx
+from src.services.exporter_docx import apply_changes_to_docx, build_docx_from_plain_text
 from src.services.policy_guard import apply_policy_guard
 from src.services.rate_limit import (
     RateLimitError,
@@ -206,8 +206,14 @@ def export_session(session_id: str) -> ExportResponse:
             )
         raise HTTPException(400, detail="请先接受至少一条可导出的修改建议")
 
+    resume_bytes = rec.resume_bytes
+    if not resume_bytes and rec.resume_text:
+        resume_bytes = build_docx_from_plain_text(rec.resume_text)
+    if not resume_bytes:
+        raise HTTPException(400, detail="无可用简历内容，无法导出")
+
     out = EXPORT_DIR / f"{session_id}.docx"
-    applied = apply_changes_to_docx(rec.resume_bytes, to_export, out)
+    applied = apply_changes_to_docx(resume_bytes, to_export, out)
     if applied == 0:
         raise HTTPException(
             400,

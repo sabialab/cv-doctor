@@ -1,4 +1,7 @@
-/** Daily cap on POST /api/sessions (edge). Keep detail in sync with server rate_limit.py */
+/**
+ * Daily cap on POST /api/sessions (edge). Keep detail in sync with server rate_limit.py.
+ * P0: in-memory per isolate (best-effort). Durable KV/D1 counter is a follow-up for multi-isolate prod.
+ */
 
 export const RATE_LIMIT_DETAIL =
   "今日创建会话次数已达上限，请明天再试。";
@@ -12,7 +15,7 @@ function dayKey(): string {
 }
 
 function bucketKey(request: Request): string {
-  return `${clientIp(request)}:${dayKey()}`;
+  return clientIp(request);
 }
 
 export function clientIp(request: Request): string {

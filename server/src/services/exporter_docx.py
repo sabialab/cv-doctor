@@ -35,6 +35,20 @@ def _replace_in_paragraph(para: Paragraph, original: str, revised: str) -> bool:
     return True
 
 
+def build_docx_from_plain_text(text: str) -> bytes:
+    """Build a minimal DOCX from pasted resume text (text-only sessions)."""
+    buf = BytesIO()
+    doc = Document()
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    if not lines:
+        doc.add_paragraph(text.strip() or "")
+    else:
+        for line in lines:
+            doc.add_paragraph(line)
+    doc.save(buf)
+    return buf.getvalue()
+
+
 def apply_changes_to_docx(
     resume_bytes: bytes,
     changes: list[Change],

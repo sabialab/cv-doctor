@@ -58,6 +58,16 @@ def test_validation_failure_does_not_consume_rate_limit(monkeypatch):
     assert client.post("/sessions", files=files, data=_session_form()).status_code == 200
 
 
+def test_invalid_rate_limit_env_falls_back_to_default(monkeypatch):
+    monkeypatch.setenv("RATE_LIMIT_ENABLED", "1")
+    monkeypatch.setenv("RATE_LIMIT_SESSIONS_PER_DAY", "not-a-number")
+    reset_for_tests()
+    client = TestClient(app)
+    mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    files = {"resume": ("resume.docx", _minimal_docx(), mime)}
+    assert client.post("/sessions", files=files, data=_session_form()).status_code == 200
+
+
 def test_rate_limit_skipped_behind_worker(monkeypatch):
     monkeypatch.setenv("RATE_LIMIT_ENABLED", "1")
     monkeypatch.setenv("RATE_LIMIT_SESSIONS_PER_DAY", "1")

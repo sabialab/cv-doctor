@@ -48,3 +48,23 @@ def test_configure_logging_is_idempotent():
     count = sum(1 for f in root.filters if isinstance(f, RedactingFilter))
     configure_logging()
     assert sum(1 for f in root.filters if isinstance(f, RedactingFilter)) == count
+
+
+def test_configure_logging_attaches_filter_to_handlers():
+    configure_logging()
+    root = logging.getLogger()
+    assert root.handlers
+    assert all(
+        any(isinstance(f, RedactingFilter) for f in handler.filters)
+        for handler in root.handlers
+    )
+
+
+def test_named_logger_emits_redacted_via_handler(caplog):
+    configure_logging()
+    caplog.set_level(logging.INFO)
+    logger = logging.getLogger("src.services.diagnosis_errors")
+    long_jd = "岗位" * 200
+    logger.info("payload %s", {"jd_text": long_jd})
+    assert long_jd not in caplog.text
+    assert "<redacted>" in caplog.text or "len=" in caplog.text

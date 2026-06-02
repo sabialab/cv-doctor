@@ -53,14 +53,14 @@ app.use("/api/sessions", async (c, next) => {
   if (c.req.method !== "POST") {
     return next();
   }
-  const limit = parseInt(c.env.RATE_LIMIT_SESSIONS_PER_DAY ?? "20", 10);
+  const parsed = parseInt(c.env.RATE_LIMIT_SESSIONS_PER_DAY ?? "20", 10);
+  const limit = Number.isFinite(parsed) && parsed > 0 ? parsed : 20;
   const blocked = checkSessionCreateLimit(c.req.raw, limit);
   if (blocked) return blocked;
-  const response = (await next()) as Response | undefined;
-  if (response?.ok) {
+  await next();
+  if (c.res.status >= 200 && c.res.status < 300) {
     recordSessionCreate(c.req.raw);
   }
-  return response;
 });
 
 /** 将 /api/* 转发到 Python 流水线（P0 本地与容器同路径） */
