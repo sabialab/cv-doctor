@@ -27,7 +27,7 @@ from src.services.export_guard import exportable_changes
 from src.services.exporter_docx import apply_changes_to_docx
 from src.services.policy_guard import apply_policy_guard
 from src.services.rate_limit import (
-    RateLimitExceeded,
+    RateLimitError,
     check_session_create_rate_limit,
     client_ip,
     should_apply_rate_limit,
@@ -125,7 +125,7 @@ async def create_session_route(
     if should_apply_rate_limit(request):
         try:
             check_session_create_rate_limit(client_ip(request))
-        except RateLimitExceeded as exc:
+        except RateLimitError as exc:
             raise HTTPException(429, detail=exc.detail) from exc
 
     if not _consent_granted(consent):

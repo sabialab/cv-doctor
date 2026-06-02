@@ -12,7 +12,7 @@ from fastapi import Request
 RATE_LIMIT_DETAIL = "今日创建会话次数已达上限，请明天再试。"
 
 
-class RateLimitExceeded(Exception):
+class RateLimitError(Exception):
     def __init__(self, detail: str = RATE_LIMIT_DETAIL) -> None:
         self.detail = detail
         super().__init__(detail)
@@ -59,7 +59,7 @@ def check_session_create_rate_limit(client_key: str) -> None:
         if prev_day != day:
             count = 0
         if count >= limit:
-            raise RateLimitExceeded()
+            raise RateLimitError()
         _buckets[client_key] = (day, count + 1)
 
 
