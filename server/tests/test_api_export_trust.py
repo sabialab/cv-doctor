@@ -46,7 +46,7 @@ def test_api_result_includes_evidence_ids():
     r = client.post(
         "/sessions",
         files={"resume": ("resume.docx", buf.getvalue(), mime)},
-        data={"jd_text": "需要 Python"},
+        data={"jd_text": "需要 Python", "consent": "true"},
     )
     assert r.status_code == 200, r.text
     sid = r.json()["session_id"]

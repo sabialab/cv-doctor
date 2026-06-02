@@ -19,22 +19,22 @@ from src.api.schemas import (
     diagnosis_result_for_api,
 )
 from src.config import config
+from src.logging_config import configure_logging
 from src.models import ChangeStatus
+from src.repositories.session import get_repository
+from src.services.diagnosis_errors import user_facing_diagnosis_error
 from src.services.export_guard import exportable_changes
 from src.services.exporter_docx import apply_changes_to_docx
 from src.services.policy_guard import apply_policy_guard
-from src.services.session_store import (
-    create_session,
-    delete_session,
-    get_session,
-    update_session,
-)
-from src.services.session_store import (
-    patch_change as store_patch_change,
-)
 from src.services.stub_pipeline import build_stub_diagnosis
 
+configure_logging()
+
 app = FastAPI(title="CV Doctor API", version="0.1.0-p0")
+
+
+def _consent_granted(value: str) -> bool:
+    return value.strip().lower() in ("true", "1", "on", "yes")
 
 _origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
 app.add_middleware(
@@ -49,8 +49,12 @@ EXPORT_DIR = Path(os.getenv("STORAGE_PATH", "./uploads")) / "exports"
 EXPORT_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def _repo():
+    return get_repository()
+
+
 def _progress(session_id: str, step: str) -> None:
-    update_session(session_id, processing_step=step)
+    _repo().update_session(session_id, processing_step=step)
 
 
 def _run_diagnosis(session_id: str) -> None:
@@ -58,10 +62,11 @@ def _run_diagnosis(session_id: str) -> None:
 
     from src.processing_steps import PARSING_RESUME, STUB_PROGRESS_SEQUENCE
 
-    rec = get_session(session_id)
+    repo = _repo()
+    rec = repo.get_session(session_id)
     if rec is None:
         return
-    update_session(session_id, status="processing", processing_step=PARSING_RESUME)
+    repo.update_session(session_id, status="processing", processing_step=PARSING_RESUME)
     try:
         if config.use_real_pipeline:
             from src.pipeline import run_diagnosis
@@ -80,7 +85,7 @@ def _run_diagnosis(session_id: str) -> None:
             result = result.model_copy(
                 update={"changes": filtered, "policy_guard": summary}
             )
-        update_session(
+        repo.update_session(
             session_id,
             status="ready",
             result=result,
@@ -88,7 +93,12 @@ def _run_diagnosis(session_id: str) -> None:
             processing_step=None,
         )
     except Exception as exc:  # noqa: BLE001 — P0 边界
-        update_session(session_id, status="failed", error=str(exc), processing_step=None)
+        repo.update_session(
+            session_id,
+            status="failed",
+            error=user_facing_diagnosis_error(exc),
+            processing_step=None,
+        )
 
 
 @app.get("/health")
@@ -101,7 +111,10 @@ async def create_session_route(
     background_tasks: BackgroundTasks,
     resume: UploadFile = File(...),
     jd_text: str = Form(""),
+    consent: str = Form(""),
 ) -> SessionCreateResponse:
+    if not _consent_granted(consent):
+        raise HTTPException(400, detail="请先同意隐私说明后再上传")
     if not resume.filename or not resume.filename.lower().endswith(".docx"):
         raise HTTPException(400, detail="仅支持 .docx 简历")
     if not jd_text.strip():
@@ -111,14 +124,14 @@ async def create_session_route(
     if len(data) > 10 * 1024 * 1024:
         raise HTTPException(400, detail="文件超过 10MB")
 
-    record = create_session(resume_bytes=data, jd_text=jd_text.strip())
+    record = _repo().create_session(resume_bytes=data, jd_text=jd_text.strip())
     background_tasks.add_task(_run_diagnosis, record.session_id)
     return SessionCreateResponse(session_id=record.session_id, status=record.status)
 
 
 @app.get("/sessions/{session_id}", response_model=SessionStatusResponse)
 def get_session_route(session_id: str) -> SessionStatusResponse:
-    rec = get_session(session_id)
+    rec = _repo().get_session(session_id)
     if rec is None:
         raise HTTPException(404, detail="会话不存在或已过期")
     api_result = diagnosis_result_for_api(rec.result) if rec.result else None
@@ -133,7 +146,8 @@ def get_session_route(session_id: str) -> SessionStatusResponse:
 
 @app.patch("/sessions/{session_id}/changes/{change_id}", response_model=ChangePatchResponse)
 def patch_change(session_id: str, change_id: str, body: ChangePatchRequest) -> ChangePatchResponse:
-    rec = store_patch_change(
+    repo = _repo()
+    rec = repo.patch_change(
         session_id,
         change_id,
         status=body.status,
@@ -143,16 +157,15 @@ def patch_change(session_id: str, change_id: str, body: ChangePatchRequest) -> C
         raise HTTPException(400, detail="修改内容含禁止表述，无法采纳")
     if rec is None:
         raise HTTPException(404, detail="会话、结果或修改项不存在")
-    if rec.export_path:
-        Path(rec.export_path).unlink(missing_ok=True)
-        update_session(session_id, export_path=None)
+    repo.clear_export_file(session_id)
     ch = next(c for c in rec.result.changes if c.id == change_id)
     return ChangePatchResponse(id=change_id, status=ch.status)
 
 
 @app.post("/sessions/{session_id}/export", response_model=ExportResponse)
 def export_session(session_id: str) -> ExportResponse:
-    rec = get_session(session_id)
+    repo = _repo()
+    rec = repo.get_session(session_id)
     if rec is None or rec.result is None:
         raise HTTPException(404, detail="会话不可用")
 
@@ -173,7 +186,7 @@ def export_session(session_id: str) -> ExportResponse:
             400,
             detail="未在简历中找到可替换的原文片段，请编辑修改建议或重新上传简历",
         )
-    update_session(session_id, export_path=str(out))
+    repo.update_session(session_id, export_path=str(out))
     return ExportResponse(
         download_url=f"/sessions/{session_id}/export/download",
         format="docx",
@@ -182,7 +195,7 @@ def export_session(session_id: str) -> ExportResponse:
 
 @app.get("/sessions/{session_id}/export/download")
 def download_export(session_id: str):
-    rec = get_session(session_id)
+    rec = _repo().get_session(session_id)
     if rec is None or not rec.export_path or not Path(rec.export_path).is_file():
         raise HTTPException(404, detail="导出文件不存在")
     return FileResponse(
@@ -194,12 +207,11 @@ def download_export(session_id: str):
 
 @app.delete("/sessions/{session_id}", response_model=PrivacyResponse)
 def delete_session_route(session_id: str) -> PrivacyResponse:
-    rec = get_session(session_id)
+    rec = _repo().get_session(session_id)
     if rec is None:
         raise HTTPException(404, detail="会话不存在")
-    if rec.export_path:
-        Path(rec.export_path).unlink(missing_ok=True)
-    delete_session(session_id)
+    _repo().clear_export_file(session_id)
+    _repo().delete_session(session_id)
     return PrivacyResponse(message="已删除")
 
 

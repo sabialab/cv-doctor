@@ -5,6 +5,27 @@ from fastapi.testclient import TestClient
 from src.main import app
 
 
+def test_create_session_requires_consent():
+    client = TestClient(app)
+    from io import BytesIO
+
+    from docx import Document
+
+    buf = BytesIO()
+    doc = Document()
+    doc.add_paragraph("test")
+    doc.save(buf)
+    mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    files = {"resume": ("resume.docx", buf.getvalue(), mime)}
+    r = client.post(
+        "/sessions",
+        files=files,
+        data={"jd_text": "需要 Python", "consent": "false"},
+    )
+    assert r.status_code == 400
+    assert "隐私" in r.json()["detail"]
+
+
 def test_health():
     client = TestClient(app)
     r = client.get("/health")
@@ -27,7 +48,10 @@ def test_session_flow_stub():
     buf.seek(0)
     mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     files = {"resume": ("resume.docx", buf.read(), mime)}
-    data = {"jd_text": "需要 Python 和 FastAPI 经验的后端工程师。"}
+    data = {
+        "jd_text": "需要 Python 和 FastAPI 经验的后端工程师。",
+        "consent": "true",
+    }
     r = client.post("/sessions", files=files, data=data)
     assert r.status_code == 200, r.text
     sid = r.json()["session_id"]

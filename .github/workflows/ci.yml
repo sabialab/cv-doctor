@@ -47,7 +47,10 @@ jobs:
             src/gap_analyzer.py \
             src/change_generator.py \
             src/llm \
+            src/repositories \
             src/services/session_store.py \
+            src/services/diagnosis_errors.py \
+            src/logging_config.py \
             src/services/stub_pipeline.py \
             src/services/policy_guard.py \
             src/services/export_guard.py \

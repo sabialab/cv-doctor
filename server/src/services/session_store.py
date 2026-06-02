@@ -1,67 +1,38 @@
-"""P0 内存会话存储（本地开发）；生产由 Worker + D1/R2 替代。"""
+"""Backward-compatible shim — prefer `src.repositories.get_repository()`."""
 
 from __future__ import annotations
 
-import threading
-import uuid
-from dataclasses import dataclass, field
-from datetime import UTC, datetime
-from typing import Literal
+from datetime import datetime
 
-from src.models import ChangeStatus, PolicyAction, PolicyGuard
-from src.p0_models import DiagnosisResult
+from src.models import ChangeStatus
 
-SessionStatus = Literal["pending", "processing", "ready", "failed"]
+# Tests monkeypatch this alias; must reference the same dict as memory backend.
+from src.repositories.memory import _sessions  # noqa: F401
+from src.repositories.session import PatchChangeResult, SessionRecord
+from src.repositories.session import get_repository as _get_repository
 
 
-@dataclass
-class SessionRecord:
-    session_id: str
-    status: SessionStatus = "pending"
-    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
-    resume_bytes: bytes = b""
-    jd_text: str = ""
-    result: DiagnosisResult | None = None
-    error: str | None = None
-    export_path: str | None = None
-    processing_step: str | None = None
+def _repo():
+    return _get_repository()
 
 
-PatchChangeResult = SessionRecord | Literal["forbidden"] | None
-
-_lock = threading.Lock()
-_sessions: dict[str, SessionRecord] = {}
-_SESSION_FIELDS = frozenset(SessionRecord.__dataclass_fields__)
-
-
-def create_session(*, resume_bytes: bytes, jd_text: str) -> SessionRecord:
-    session_id = str(uuid.uuid4())
-    record = SessionRecord(
-        session_id=session_id,
-        status="pending",
-        resume_bytes=resume_bytes,
-        jd_text=jd_text,
+def create_session(
+    *,
+    resume_bytes: bytes,
+    jd_text: str,
+    resume_text: str | None = None,
+) -> SessionRecord:
+    return _repo().create_session(
+        resume_bytes=resume_bytes, jd_text=jd_text, resume_text=resume_text
     )
-    with _lock:
-        _sessions[session_id] = record
-    return record
 
 
 def get_session(session_id: str) -> SessionRecord | None:
-    with _lock:
-        return _sessions.get(session_id)
+    return _repo().get_session(session_id)
 
 
 def update_session(session_id: str, **kwargs: object) -> SessionRecord | None:
-    with _lock:
-        rec = _sessions.get(session_id)
-        if rec is None:
-            return None
-        for key, value in kwargs.items():
-            if key not in _SESSION_FIELDS:
-                raise ValueError(f"未知会话字段: {key}")
-            setattr(rec, key, value)
-        return rec
+    return _repo().update_session(session_id, **kwargs)
 
 
 def patch_change(
@@ -71,31 +42,14 @@ def patch_change(
     status: ChangeStatus | str | None = None,
     revised: str | None = None,
 ) -> PatchChangeResult:
-    with _lock:
-        rec = _sessions.get(session_id)
-        if rec is None or rec.result is None:
-            return None
-        for ch in rec.result.changes:
-            if ch.id != change_id:
-                continue
-            if revised is not None:
-                trial = ch.model_copy(update={"revised": revised})
-                action = PolicyGuard().check_change(trial)
-                if action == PolicyAction.FORBIDDEN:
-                    return "forbidden"
-                ch.revised = revised
-                ch.requires_user_confirmation = action == PolicyAction.NEEDS_CONFIRMATION
-                ch.status = (
-                    ChangeStatus.PENDING
-                    if action == PolicyAction.NEEDS_CONFIRMATION
-                    else ChangeStatus.ACCEPTED
-                )
-            elif status is not None:
-                ch.status = ChangeStatus(status) if isinstance(status, str) else status
-            return rec
-        return None
+    return _repo().patch_change(
+        session_id, change_id, status=status, revised=revised
+    )
 
 
 def delete_session(session_id: str) -> bool:
-    with _lock:
-        return _sessions.pop(session_id, None) is not None
+    return _repo().delete_session(session_id)
+
+
+def list_expired_session_ids(before: datetime) -> list[str]:
+    return _repo().list_expired_session_ids(before)
