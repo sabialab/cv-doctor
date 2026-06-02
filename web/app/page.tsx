@@ -48,7 +48,7 @@ export default function HomePage() {
     try {
       const { session_id } = await createSession({
         jdText: jdText.trim(),
-        consent: true,
+        consent,
         resume: sendingFile ? file : null,
         resumeText: pasted || undefined,
       });

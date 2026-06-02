@@ -1,36 +1,49 @@
 #!/usr/bin/env python3
-"""Delete in-memory sessions older than AUTO_DELETE_HOURS (local dev / memory backend)."""
+"""Purge expired sessions via the running API (memory backend is process-local)."""
 
 from __future__ import annotations
 
+import json
 import os
 import sys
-from datetime import UTC, datetime, timedelta
-from pathlib import Path
-
-_SERVER = Path(__file__).resolve().parents[1] / "server"
-if str(_SERVER) not in sys.path:
-    sys.path.insert(0, str(_SERVER))
-
-from src.repositories.session import get_repository  # noqa: E402
+import urllib.error
+import urllib.request
 
 
 def main() -> int:
-    raw_hours = os.getenv("AUTO_DELETE_HOURS", "24")
+    base = os.getenv("PIPELINE_URL", "http://127.0.0.1:8787").rstrip("/")
+    url = f"{base}/admin/purge-expired"
+    req = urllib.request.Request(url, method="POST")
     try:
-        hours = int(raw_hours)
-    except ValueError:
-        print(f"Invalid AUTO_DELETE_HOURS={raw_hours!r}, using 24", file=sys.stderr)
-        hours = 24
-
-    before = datetime.now(UTC) - timedelta(hours=hours)
-    try:
-        repo = get_repository()
-    except NotImplementedError as exc:
-        print(f"purge-expired-sessions: {exc}", file=sys.stderr)
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            body = json.loads(resp.read().decode())
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode(errors="replace")
+        print(
+            f"purge-expired-sessions: HTTP {exc.code} from {url}\n{detail}",
+            file=sys.stderr,
+        )
+        if exc.code == 404:
+            print(
+                "Hint: set ALLOW_ADMIN_PURGE=1 on the API server (see server/.env.example).",
+                file=sys.stderr,
+            )
         return 1
-    count = repo.purge_expired(before)
-    print(f"Purged {count} session(s) created before {before.isoformat()} (>{hours}h ago)")
+    except urllib.error.URLError as exc:
+        print(
+            f"purge-expired-sessions: cannot reach {url}: {exc.reason}\n"
+            "Start the API (e.g. cd server && uv run uvicorn src.main:app --port 8787).",
+            file=sys.stderr,
+        )
+        return 1
+
+    purged = body.get("purged", 0)
+    orphans = body.get("orphan_exports", 0)
+    hours = os.getenv("AUTO_DELETE_HOURS", "24")
+    print(
+        f"Purged {purged} in-memory session(s) and {orphans} orphan export file(s) "
+        f"(AUTO_DELETE_HOURS={hours})"
+    )
     return 0
 
 

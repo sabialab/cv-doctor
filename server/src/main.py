@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, Request, UploadFile
@@ -108,9 +109,47 @@ def _run_diagnosis(session_id: str) -> None:
         )
 
 
+def _auto_delete_hours() -> int:
+    raw = os.getenv("AUTO_DELETE_HOURS", "24")
+    try:
+        hours = int(raw)
+    except ValueError:
+        hours = 24
+    return hours if hours > 0 else 24
+
+
+def _purge_cutoff() -> datetime:
+    return datetime.now(UTC) - timedelta(hours=_auto_delete_hours())
+
+
+def _purge_orphan_export_files(before: datetime) -> int:
+    """Remove export files on disk when the server restarted (no in-memory session)."""
+    if not EXPORT_DIR.is_dir():
+        return 0
+    removed = 0
+    for path in EXPORT_DIR.glob("*.docx"):
+        mtime = datetime.fromtimestamp(path.stat().st_mtime, tz=UTC)
+        if mtime < before:
+            path.unlink(missing_ok=True)
+            removed += 1
+    return removed
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.post("/admin/purge-expired")
+def admin_purge_expired() -> dict[str, int]:
+    """Purge expired sessions in this API process (local ops; requires ALLOW_ADMIN_PURGE=1)."""
+    flag = os.getenv("ALLOW_ADMIN_PURGE", "0").strip().lower()
+    if flag not in ("1", "true", "yes"):
+        raise HTTPException(404, detail="Not found")
+    before = _purge_cutoff()
+    purged = _repo().purge_expired(before)
+    orphan_exports = _purge_orphan_export_files(before)
+    return {"purged": purged, "orphan_exports": orphan_exports}
 
 
 @app.post("/sessions", response_model=SessionCreateResponse)
