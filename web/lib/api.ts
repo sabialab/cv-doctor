@@ -52,15 +52,31 @@ export interface DiagnosisResult {
   free_change_limit?: number;
 }
 
+export type CreateSessionInput = {
+  jdText: string;
+  consent?: boolean;
+  resume?: File | null;
+  resumeText?: string;
+};
+
+/** True when the API message suggests DOCX parse failure — show paste fallback UI. */
+export function isResumeParseError(message: string): boolean {
+  return /解析|\.docx|简历全文|无法从 DOCX|上传.*粘贴/i.test(message);
+}
+
 export async function createSession(
-  resume: File,
-  jdText: string,
-  consent = true,
+  input: CreateSessionInput,
 ): Promise<{ session_id: string }> {
   const form = new FormData();
-  form.append("resume", resume);
-  form.append("jd_text", jdText);
-  form.append("consent", consent ? "true" : "false");
+  if (input.resume) {
+    form.append("resume", input.resume);
+  }
+  const pasted = input.resumeText?.trim();
+  if (pasted) {
+    form.append("resume_text", pasted);
+  }
+  form.append("jd_text", input.jdText);
+  form.append("consent", input.consent !== false ? "true" : "false");
   const res = await fetch(apiUrl("/sessions"), { method: "POST", body: form });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
