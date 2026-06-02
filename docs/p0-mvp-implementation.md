@@ -272,6 +272,9 @@ for change in changes:
 
 ### Phase 3：隐私、稳定、上线（第 2–3 周）
 
+> **落地执行方案（M3）：** [docs/superpowers/plans/2026-06-02-p0-m3-privacy-stability-launch.md](./superpowers/plans/2026-06-02-p0-m3-privacy-stability-launch.md)  
+> **设计 spec：** [docs/superpowers/specs/2026-06-02-p0-m3-privacy-stability-launch-design.md](./superpowers/specs/2026-06-02-p0-m3-privacy-stability-launch-design.md)
+
 | # | 任务 | 产出 |
 |---|------|------|
 | 3.1 | 上传前隐私弹层/文案（调用云模型、24h 删除、不训练） | 合规 |

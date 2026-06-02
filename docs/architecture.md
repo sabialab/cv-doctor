@@ -40,7 +40,8 @@ CV-Doctor 是 **Web 优先的简历手术台**：用户上传简历（DOCX）并
 |------|--------|
 | 本文 `architecture.md` | 理解逻辑架构、Pipeline、信任模型、部署单元 |
 | [p0-mvp-implementation.md](./p0-mvp-implementation.md) | P0 范围、API、验收、里程碑 |
-| [superpowers/plans/2026-06-01-p0-m2-frontend-closure.md](./superpowers/plans/2026-06-01-p0-m2-frontend-closure.md) | **当前** M2 前端闭环（Superpowers 实施计划） |
+| [superpowers/plans/2026-06-01-p0-m2-frontend-closure.md](./superpowers/plans/2026-06-01-p0-m2-frontend-closure.md) | M2 前端闭环（已完成） |
+| [superpowers/plans/2026-06-02-p0-m3-privacy-stability-launch.md](./superpowers/plans/2026-06-02-p0-m3-privacy-stability-launch.md) | **当前** M3 隐私、稳定、上线 |
 | [p0-cloudflare-stack.md](./p0-cloudflare-stack.md) | **目标**全栈 Cloudflare 部署（Pages / Worker / D1 / R2 / Container） |
 | [mvp-feasibility.md](./mvp-feasibility.md) | 范围边界与风险 |
 | [contributing.md](./contributing.md) | 人类贡献者：分支、提交、CI、PR 前检查 |
