@@ -93,6 +93,13 @@ class MemorySessionRepository:
                 sid for sid, rec in _sessions.items() if rec.created_at < before
             ]
 
+    def purge_expired(self, before: datetime) -> int:
+        expired = self.list_expired_session_ids(before)
+        for session_id in expired:
+            self.clear_export_file(session_id)
+            self.delete_session(session_id)
+        return len(expired)
+
     def clear_export_file(self, session_id: str) -> None:
         rec = self.get_session(session_id)
         if rec is None or not rec.export_path:
