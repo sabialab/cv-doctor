@@ -10,7 +10,7 @@ from src.config import config
 from src.facts import build_evidence_store
 from src.gap_analyzer import analyze_gaps
 from src.llm.client import LLMClient, get_llm_client
-from src.models import MatchLevel
+from src.models import MatchLevel, Resume
 from src.p0_models import (
     DiagnosisResult,
     GapItem,
@@ -22,7 +22,7 @@ from src.p0_models import (
     P0MatchScore,
 )
 from src.parser_jd import parse_jd
-from src.parser_resume import parse_resume
+from src.parser_resume import parse_resume, resume_from_raw_text
 from src.processing_steps import (
     ANALYZING_JD,
     GENERATING_CHANGES,
@@ -119,10 +119,24 @@ def _p0_match_score(gap) -> P0MatchScore:
     )
 
 
+def _resolve_resume(resume_bytes: bytes, resume_text: str | None) -> Resume:
+    if resume_bytes:
+        resume = parse_resume(resume_bytes)
+        if resume.raw_text.strip():
+            return resume
+        if resume_text and resume_text.strip():
+            return resume_from_raw_text(resume_text)
+        raise ValueError("无法从 DOCX 解析简历内容，请粘贴简历全文后重试")
+    if resume_text and resume_text.strip():
+        return resume_from_raw_text(resume_text)
+    raise ValueError("请上传 .docx 或粘贴简历全文")
+
+
 def run_diagnosis(
     resume_bytes: bytes,
     jd_text: str,
     *,
+    resume_text: str | None = None,
     llm: LLMClient | None = None,
     on_step: Callable[[str], None] | None = None,
 ) -> DiagnosisResult:
@@ -136,7 +150,7 @@ def run_diagnosis(
     client = llm or get_llm_client()
 
     step(PARSING_RESUME)
-    resume = parse_resume(resume_bytes)
+    resume = _resolve_resume(resume_bytes, resume_text)
     step(ANALYZING_JD)
     jd = parse_jd(jd_text, client)
     step(MATCHING)

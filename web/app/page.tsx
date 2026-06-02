@@ -10,11 +10,16 @@ export default function HomePage() {
   const router = useRouter();
   const [jdText, setJdText] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [consent, setConsent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!consent) {
+      setError("请先勾选同意隐私说明");
+      return;
+    }
     if (!file || !jdText.trim()) {
       setError("请上传 .docx 并粘贴岗位描述");
       return;
@@ -22,7 +27,7 @@ export default function HomePage() {
     setLoading(true);
     setError(null);
     try {
-      const { session_id } = await createSession(file, jdText.trim());
+      const { session_id } = await createSession(file, jdText.trim(), true);
       router.push(`/s/${session_id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "提交失败");
@@ -64,6 +69,22 @@ export default function HomePage() {
             onChange={(e) => setJdText(e.target.value)}
           />
         </div>
+        <label className="flex items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            className="mt-1"
+            checked={consent}
+            onChange={(e) => setConsent(e.target.checked)}
+            required
+          />
+          <span>
+            我已阅读并同意{" "}
+            <Link href="/privacy" className="underline">
+              隐私说明
+            </Link>
+            （含第三方模型处理；生产环境默认 24 小时内自动删除，本地可手动删除）
+          </span>
+        </label>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button
           type="submit"
@@ -75,11 +96,8 @@ export default function HomePage() {
       </form>
 
       <p className="mt-8 text-xs text-neutral-500">
-        上传即表示同意{" "}
-        <Link href="/privacy" className="underline">
-          隐私说明
-        </Link>
-        。诊断会调用第三方云模型（DeepSeek）；结果页可手动删除；生产环境默认 24 小时内自动删除（见隐私说明）。不用于模型训练。
+        诊断会调用第三方云模型（DeepSeek）。本地联调数据在进程重启前保留或可在结果页删除；生产环境默认
+        24 小时内自动删除。不用于模型训练。
       </p>
     </main>
   );

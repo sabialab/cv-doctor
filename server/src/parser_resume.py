@@ -48,6 +48,14 @@ def _parse_bullets(lines: list[str]) -> list[str]:
     return bullets
 
 
+def resume_from_raw_text(text: str) -> Resume:
+    """Build a minimal Resume when DOCX parse is empty or user pasted plain text."""
+    cleaned = text.strip()
+    first_line = cleaned.split("\n", 1)[0].strip() if cleaned else "未知"
+    name = first_line[:40] if first_line else "未知"
+    return Resume(name=name, raw_text=cleaned)
+
+
 def parse_resume(docx_bytes: bytes) -> Resume:
     """Parse DOCX bytes into Resume with raw_text fallback."""
     doc = Document(BytesIO(docx_bytes))

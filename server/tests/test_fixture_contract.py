@@ -22,6 +22,7 @@ def test_readme_style_jd_file_upload_returns_422():
             "resume": ("resume.docx", FIXTURE_RESUME.read_bytes(), MIME),
             "jd_text": ("sample-jd.txt", jd.encode(), "text/plain"),
         },
+        data={"consent": "true"},
     )
     assert r.status_code == 422
 
@@ -31,7 +32,7 @@ def test_m1_form_jd_string_succeeds():
     r = client.post(
         "/sessions",
         files={"resume": ("resume.docx", FIXTURE_RESUME.read_bytes(), MIME)},
-        data={"jd_text": FIXTURE_JD.read_text(encoding="utf-8")},
+        data={"jd_text": FIXTURE_JD.read_text(encoding="utf-8"), "consent": "true"},
     )
     assert r.status_code == 200
     assert "session_id" in r.json()

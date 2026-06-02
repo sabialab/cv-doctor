@@ -34,7 +34,7 @@ def test_session_flow_real_pipeline_mocked(monkeypatch):
         r = client.post(
             "/sessions",
             files={"resume": ("resume.docx", resume_bytes, MIME)},
-            data={"jd_text": FIXTURE_JD.read_text(encoding="utf-8")},
+            data={"jd_text": FIXTURE_JD.read_text(encoding="utf-8"), "consent": "true"},
         )
         assert r.status_code == 200, r.text
         sid = r.json()["session_id"]

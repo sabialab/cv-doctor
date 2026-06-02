@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 from src.main import app
 from src.models import Change, ChangeRisk, ChangeStatus
 from src.p0_models import DiagnosisResult, PolicyGuardSummary
+from src.repositories import memory as memory_store
 from src.services import session_store
 
 
@@ -23,7 +24,7 @@ def _minimal_docx() -> bytes:
 
 
 def test_export_rejects_only_high_risk_accepted(monkeypatch):
-    monkeypatch.setattr(session_store, "_sessions", {})
+    monkeypatch.setattr(memory_store, "_sessions", {})
     rec = session_store.create_session(resume_bytes=_minimal_docx(), jd_text="jd")
     high = Change(
         id=str(uuid.uuid4()),

@@ -20,7 +20,7 @@ def _minimal_docx() -> bytes:
 def _ready_session(client: TestClient) -> tuple[str, str, str]:
     mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     files = {"resume": ("resume.docx", _minimal_docx(), mime)}
-    data = {"jd_text": "需要 Python 和 FastAPI 经验的后端工程师。"}
+    data = {"jd_text": "需要 Python 和 FastAPI 经验的后端工程师。", "consent": "true"}
     sid = client.post("/sessions", files=files, data=data).json()["session_id"]
     body = client.get(f"/sessions/{sid}").json()
     ch0 = body["result"]["changes"][0]
@@ -30,7 +30,7 @@ def _ready_session(client: TestClient) -> tuple[str, str, str]:
 def _ready_medium_risk_change(client: TestClient) -> tuple[str, str, str]:
     mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     files = {"resume": ("resume.docx", _minimal_docx(), mime)}
-    data = {"jd_text": "需要 Python 和 FastAPI 经验的后端工程师。"}
+    data = {"jd_text": "需要 Python 和 FastAPI 经验的后端工程师。", "consent": "true"}
     sid = client.post("/sessions", files=files, data=data).json()["session_id"]
     body = client.get(f"/sessions/{sid}").json()
     medium = next(c for c in body["result"]["changes"] if c["risk_level"] == "medium")

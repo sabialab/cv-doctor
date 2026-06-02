@@ -9,6 +9,7 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 ALLOWED_ORIGINS = "http://localhost:3000,http://127.0.0.1:3000"
 PIPELINE_URL = "http://127.0.0.1:8787"
+RATE_LIMIT_SESSIONS_PER_DAY = "20"
 
 # 生产：取消注释并执行 wrangler d1 create / r2 create
 # [[d1_databases]]
