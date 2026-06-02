@@ -10,6 +10,45 @@ This repo ships **Cursor project rules** plus optional **global skills** so beha
 4. **[`AGENTS.md`](AGENTS.md)** — cross-tool summary
 5. **`.cursor/rules/*.mdc`** — scoped automation
 
+## Superpowers — install and mandatory use
+
+**Agents MUST use Superpowers** for feature work, plans, and “done” claims. Routing: `.cursor/rules/superpowers.mdc`, [CLAUDE.md §0](CLAUDE.md#0-superpowers-插件--会话级最高优先级).
+
+### Install (if not already active)
+
+1. **Cursor Agent** (`Cmd+L` / `Ctrl+L`) — run:
+
+```text
+/plugin-add superpowers
+```
+
+2. **Verify** (new Agent session):
+
+```text
+Do you have superpowers? List available skills.
+```
+
+3. **Fallback** — sync skill files for `@brainstorming` / `@writing-plans` when the plugin Skill tool is unavailable:
+
+```bash
+./scripts/install-superpowers-skills.sh
+```
+
+Details: [docs/superpowers/README.md](docs/superpowers/README.md).
+
+### Mandatory skill flow (features & plans)
+
+| Step | Skill | Output location |
+|------|--------|-----------------|
+| Before design / UX / API shape | `brainstorming` | `docs/superpowers/specs/YYYY-MM-DD-<feature>-design.md` |
+| Before multi-step implementation | `writing-plans` | `docs/superpowers/plans/YYYY-MM-DD-<feature>.md` |
+| During implementation | `test-driven-development` | code + tests |
+| Before “done” / merge | `verification-before-completion` | command output in reply |
+
+**Forbidden:** writing a large implementation plan in `docs/p0-*.md` only, without `writing-plans` format (header, checkbox tasks, TDD steps). Legacy docs may link to a Superpowers plan.
+
+**Announce** when invoking a skill: e.g. “Using the writing-plans skill to create the implementation plan.”
+
 ## In this repository
 
 1. Open the folder in Cursor.
@@ -60,7 +99,7 @@ When creating or updating a PR, follow [`CLAUDE.md` §5](CLAUDE.md#5-pr-与-revi
 | Trust / PolicyGuard | `llm-trust-boundary.mdc`, `server/src/models.py` |
 | Karpathy principles | `CLAUDE.md` §1, `AGENTS.md`, `karpathy-guidelines.mdc`, `skills/karpathy-guidelines/` |
 | Karpathy / PR workflow | `CLAUDE.md` §1 / §5–7, `karpathy-guidelines.mdc`, `pr-workflow.mdc` |
-| Superpowers routing | `CLAUDE.md` §0, `superpowers.mdc` |
+| Superpowers routing / install | `CLAUDE.md` §0, `superpowers.mdc`, `docs/superpowers/README.md`, `scripts/install-superpowers-skills.sh` |
 
 ## Upstream reference
 
