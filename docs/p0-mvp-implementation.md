@@ -257,6 +257,8 @@ for change in changes:
 
 ### Phase 2：前端闭环（第 1–2 周）
 
+> **落地执行方案（工作包 A / M2）：** [docs/superpowers/plans/2026-06-01-p0-m2-frontend-closure.md](./superpowers/plans/2026-06-01-p0-m2-frontend-closure.md)
+
 | # | 任务 | 产出 |
 |---|------|------|
 | 2.1 | 首页：上传 + JD 粘贴 + 隐私文案 | 可提交 |
