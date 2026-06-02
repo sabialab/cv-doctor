@@ -58,6 +58,8 @@ class SessionRepository(Protocol):
 
     def clear_export_file(self, session_id: str) -> None: ...
 
+    def purge_expired(self, before: datetime) -> int: ...
+
 
 def get_repository() -> SessionRepository:
     backend = os.getenv("SESSION_BACKEND", "memory").lower()

@@ -17,6 +17,7 @@ import {
   exportDownloadUrl,
   exportSession,
   getSession,
+  isResumeParseError,
   patchChange,
   type DiagnosisResult,
   type SessionStatus,
@@ -159,9 +160,19 @@ export default function SessionPage() {
   }
 
   if (status === "failed" || !result) {
+    const parseHint = error && isResumeParseError(error);
     return (
       <main className="mx-auto max-w-2xl overflow-x-hidden px-4 py-12">
         <p className="text-red-600">{error || "分析失败"}</p>
+        {parseHint && (
+          <p className="mt-3 text-sm text-amber-900">
+            可{" "}
+            <Link href="/?paste=1" className="underline">
+              返回首页粘贴简历全文
+            </Link>{" "}
+            后重新诊断（无需再上传 Word 文件）。
+          </p>
+        )}
         <Link href="/" className="mt-4 inline-block text-sm underline">
           返回首页
         </Link>

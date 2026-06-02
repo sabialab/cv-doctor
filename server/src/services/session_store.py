@@ -53,3 +53,7 @@ def delete_session(session_id: str) -> bool:
 
 def list_expired_session_ids(before: datetime) -> list[str]:
     return _repo().list_expired_session_ids(before)
+
+
+def purge_expired(before: datetime) -> int:
+    return _repo().purge_expired(before)
