@@ -122,12 +122,6 @@ async def create_session_route(
     jd_text: str = Form(""),
     consent: str = Form(""),
 ) -> SessionCreateResponse:
-    if should_apply_rate_limit(request):
-        try:
-            check_session_create_rate_limit(client_ip(request))
-        except RateLimitError as exc:
-            raise HTTPException(429, detail=exc.detail) from exc
-
     if not _consent_granted(consent):
         raise HTTPException(400, detail="请先同意隐私说明后再上传")
     if not jd_text.strip():
@@ -146,6 +140,12 @@ async def create_session_route(
         data = await resume.read()
         if len(data) > 10 * 1024 * 1024:
             raise HTTPException(400, detail="文件超过 10MB")
+
+    if should_apply_rate_limit(request):
+        try:
+            check_session_create_rate_limit(client_ip(request))
+        except RateLimitError as exc:
+            raise HTTPException(429, detail=exc.detail) from exc
 
     record = _repo().create_session(
         resume_bytes=data,

@@ -17,7 +17,10 @@ def _redact_value(value: Any) -> Any:
     if isinstance(value, str) and len(value) > _MAX_STR_LEN:
         return f"<str len={len(value)}>"
     if isinstance(value, dict):
-        return {k: ("<redacted>" if k in _SENSITIVE_KEYS else _redact_value(v)) for k, v in value.items()}
+        return {
+            k: ("<redacted>" if k in _SENSITIVE_KEYS else _redact_value(v))
+            for k, v in value.items()
+        }
     if isinstance(value, (list, tuple)):
         redacted = [_redact_value(v) for v in value]
         return type(value)(redacted)

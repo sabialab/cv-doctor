@@ -39,6 +39,25 @@ def test_rate_limit_returns_429_with_fixed_detail(monkeypatch):
     assert blocked.json()["detail"] == RATE_LIMIT_DETAIL
 
 
+def test_validation_failure_does_not_consume_rate_limit(monkeypatch):
+    monkeypatch.setenv("RATE_LIMIT_ENABLED", "1")
+    monkeypatch.setenv("RATE_LIMIT_SESSIONS_PER_DAY", "1")
+    reset_for_tests()
+    client = TestClient(app)
+    mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    files = {"resume": ("resume.docx", _minimal_docx(), mime)}
+
+    assert (
+        client.post(
+            "/sessions",
+            files=files,
+            data={"jd_text": "需要 Python", "consent": "false"},
+        ).status_code
+        == 400
+    )
+    assert client.post("/sessions", files=files, data=_session_form()).status_code == 200
+
+
 def test_rate_limit_skipped_behind_worker(monkeypatch):
     monkeypatch.setenv("RATE_LIMIT_ENABLED", "1")
     monkeypatch.setenv("RATE_LIMIT_SESSIONS_PER_DAY", "1")

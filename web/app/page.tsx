@@ -82,7 +82,7 @@ export default function HomePage() {
             <Link href="/privacy" className="underline">
               隐私说明
             </Link>
-            （含第三方模型处理与 24 小时自动删除）
+            （含第三方模型处理；生产环境默认 24 小时内自动删除，本地可手动删除）
           </span>
         </label>
         {error && <p className="text-sm text-red-600">{error}</p>}
@@ -96,7 +96,8 @@ export default function HomePage() {
       </form>
 
       <p className="mt-8 text-xs text-neutral-500">
-        诊断会调用第三方云模型（DeepSeek）；结果页可手动删除；生产环境默认 24 小时内自动删除。不用于模型训练。
+        诊断会调用第三方云模型（DeepSeek）。本地联调数据在进程重启前保留或可在结果页删除；生产环境默认
+        24 小时内自动删除。不用于模型训练。
       </p>
     </main>
   );

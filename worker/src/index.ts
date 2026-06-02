@@ -4,7 +4,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 
-import { limitSessionCreate } from "./rate_limit";
+import { checkSessionCreateLimit, recordSessionCreate } from "./rate_limit";
 
 type Bindings = {
   PIPELINE_URL: string;
@@ -49,11 +49,18 @@ function sanitizeUpstreamHeaders(upstream: Headers): Headers {
 }
 
 /** POST /api/sessions only — per-IP daily cap (Python skips when CF-Connecting-IP is set). */
-app.post("/api/sessions", async (c, next) => {
+app.use("/api/sessions", async (c, next) => {
+  if (c.req.method !== "POST") {
+    return next();
+  }
   const limit = parseInt(c.env.RATE_LIMIT_SESSIONS_PER_DAY ?? "20", 10);
-  const blocked = limitSessionCreate(c.req.raw, limit);
+  const blocked = checkSessionCreateLimit(c.req.raw, limit);
   if (blocked) return blocked;
-  return next();
+  const response = (await next()) as Response | undefined;
+  if (response?.ok) {
+    recordSessionCreate(c.req.raw);
+  }
+  return response;
 });
 
 /** 将 /api/* 转发到 Python 流水线（P0 本地与容器同路径） */

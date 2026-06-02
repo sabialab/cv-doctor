@@ -11,6 +11,10 @@ function dayKey(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+function bucketKey(request: Request): string {
+  return `${clientIp(request)}:${dayKey()}`;
+}
+
 export function clientIp(request: Request): string {
   const cf = request.headers.get("CF-Connecting-IP");
   if (cf?.trim()) return cf.trim();
@@ -22,28 +26,35 @@ export function clientIp(request: Request): string {
   return "unknown";
 }
 
-/** Returns a 429 Response when limited; otherwise records this attempt and returns null. */
-export function limitSessionCreate(
+function currentCount(key: string, day: string): number {
+  const entry = buckets.get(key);
+  return entry?.day === day ? entry.count : 0;
+}
+
+/** Returns 429 when at cap; does not increment (record after upstream 2xx). */
+export function checkSessionCreateLimit(
   request: Request,
   limit: number,
 ): Response | null {
   if (!Number.isFinite(limit) || limit <= 0) return null;
 
-  const ip = clientIp(request);
   const day = dayKey();
-  const key = `${ip}:${day}`;
-  const entry = buckets.get(key);
-  const count = entry?.day === day ? entry.count : 0;
-
-  if (count >= limit) {
+  const key = bucketKey(request);
+  if (currentCount(key, day) >= limit) {
     return new Response(JSON.stringify({ detail: RATE_LIMIT_DETAIL }), {
       status: 429,
       headers: { "Content-Type": "application/json" },
     });
   }
-
-  buckets.set(key, { day, count: count + 1 });
   return null;
+}
+
+/** Count a successful session create (call after upstream returns 2xx). */
+export function recordSessionCreate(request: Request): void {
+  const day = dayKey();
+  const key = bucketKey(request);
+  const count = currentCount(key, day);
+  buckets.set(key, { day, count: count + 1 });
 }
 
 /** @internal test helper */
