@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-from src.models import Change, ChangeRisk, ChangeStatus
+from src.models import Change, ChangeRisk, ChangeStatus, PolicyAction, PolicyGuard
 
 
 def exportable_changes(changes: list[Change]) -> list[Change]:
-    """Accepted changes safe to merge into export (HIGH risk never exported)."""
+    """Accepted changes safe to merge into export (re-check PolicyGuard on current revised)."""
+    guard = PolicyGuard()
     return [
         c
         for c in changes
-        if c.status == ChangeStatus.ACCEPTED and c.risk_level != ChangeRisk.HIGH
+        if c.status == ChangeStatus.ACCEPTED
+        and c.risk_level != ChangeRisk.HIGH
+        and guard.check_change(c) != PolicyAction.FORBIDDEN
     ]

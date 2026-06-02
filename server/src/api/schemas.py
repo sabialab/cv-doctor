@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 from src.models import ChangeStatus
 from src.p0_models import DiagnosisResult
@@ -20,10 +20,24 @@ class SessionStatusResponse(BaseModel):
     status: Literal["pending", "processing", "ready", "failed"]
     result: dict[str, Any] | None = None
     error: str | None = None
+    processing_step: str | None = None
 
 
 class ChangePatchRequest(BaseModel):
-    status: ChangeStatus
+    status: ChangeStatus | None = None
+    revised: str | None = None
+
+    @model_validator(mode="after")
+    def validate_patch_body(self) -> ChangePatchRequest:
+        if self.revised is not None:
+            self.revised = self.revised.strip()
+            if not self.revised:
+                raise ValueError("revised 不能为空白")
+        if self.status is None and self.revised is None:
+            raise ValueError("status 或 revised 至少提供一项")
+        if self.status is not None and self.revised is not None:
+            raise ValueError("revised 与 status 不能同时提供")
+        return self
 
 
 class ChangePatchResponse(BaseModel):
@@ -89,4 +103,5 @@ def diagnosis_result_for_api(result: DiagnosisResult) -> dict[str, Any]:
             "blocked_count": pg.blocked_count,
             "warnings": pg.warnings,
         },
+        "free_change_limit": 3,
     }

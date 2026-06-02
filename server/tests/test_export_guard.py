@@ -8,6 +8,22 @@ from src.models import Change, ChangeRisk, ChangeStatus
 from src.services.export_guard import exportable_changes
 
 
+def test_forbidden_revised_not_exportable():
+    changes = [
+        Change(
+            id="1",
+            section="summary",
+            original="熟悉 Python",
+            revised="Python（编造经历）",
+            reason="r",
+            evidence_ids=["f1"],
+            risk_level=ChangeRisk.LOW,
+            status=ChangeStatus.ACCEPTED,
+        ),
+    ]
+    assert exportable_changes(changes) == []
+
+
 def test_high_risk_accepted_not_exportable():
     changes = [
         Change(

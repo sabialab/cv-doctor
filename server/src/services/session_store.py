@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Literal
 
+from src.models import ChangeStatus, PolicyAction, PolicyGuard
 from src.p0_models import DiagnosisResult
 
 SessionStatus = Literal["pending", "processing", "ready", "failed"]
@@ -23,7 +24,10 @@ class SessionRecord:
     result: DiagnosisResult | None = None
     error: str | None = None
     export_path: str | None = None
+    processing_step: str | None = None
 
+
+PatchChangeResult = SessionRecord | Literal["forbidden"] | None
 
 _lock = threading.Lock()
 _sessions: dict[str, SessionRecord] = {}
@@ -60,15 +64,35 @@ def update_session(session_id: str, **kwargs: object) -> SessionRecord | None:
         return rec
 
 
-def patch_change(session_id: str, change_id: str, status: str) -> SessionRecord | None:
+def patch_change(
+    session_id: str,
+    change_id: str,
+    *,
+    status: ChangeStatus | str | None = None,
+    revised: str | None = None,
+) -> PatchChangeResult:
     with _lock:
         rec = _sessions.get(session_id)
         if rec is None or rec.result is None:
             return None
         for ch in rec.result.changes:
-            if ch.id == change_id:
-                ch.status = status
-                return rec
+            if ch.id != change_id:
+                continue
+            if revised is not None:
+                trial = ch.model_copy(update={"revised": revised})
+                action = PolicyGuard().check_change(trial)
+                if action == PolicyAction.FORBIDDEN:
+                    return "forbidden"
+                ch.revised = revised
+                ch.requires_user_confirmation = action == PolicyAction.NEEDS_CONFIRMATION
+                ch.status = (
+                    ChangeStatus.PENDING
+                    if action == PolicyAction.NEEDS_CONFIRMATION
+                    else ChangeStatus.ACCEPTED
+                )
+            elif status is not None:
+                ch.status = ChangeStatus(status) if isinstance(status, str) else status
+            return rec
         return None
 
 

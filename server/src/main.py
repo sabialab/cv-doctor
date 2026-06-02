@@ -49,25 +49,46 @@ EXPORT_DIR = Path(os.getenv("STORAGE_PATH", "./uploads")) / "exports"
 EXPORT_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def _progress(session_id: str, step: str) -> None:
+    update_session(session_id, processing_step=step)
+
+
 def _run_diagnosis(session_id: str) -> None:
+    import time
+
+    from src.processing_steps import PARSING_RESUME, STUB_PROGRESS_SEQUENCE
+
     rec = get_session(session_id)
     if rec is None:
         return
-    update_session(session_id, status="processing")
+    update_session(session_id, status="processing", processing_step=PARSING_RESUME)
     try:
         if config.use_real_pipeline:
             from src.pipeline import run_diagnosis
 
-            result = run_diagnosis(rec.resume_bytes, rec.jd_text)
+            result = run_diagnosis(
+                rec.resume_bytes,
+                rec.jd_text,
+                on_step=lambda s: _progress(session_id, s),
+            )
         else:
+            for step in STUB_PROGRESS_SEQUENCE[1:]:
+                _progress(session_id, step)
+                time.sleep(0.35)
             result = build_stub_diagnosis()
             filtered, summary = apply_policy_guard(result.changes)
             result = result.model_copy(
                 update={"changes": filtered, "policy_guard": summary}
             )
-        update_session(session_id, status="ready", result=result, error=None)
+        update_session(
+            session_id,
+            status="ready",
+            result=result,
+            error=None,
+            processing_step=None,
+        )
     except Exception as exc:  # noqa: BLE001 — P0 边界
-        update_session(session_id, status="failed", error=str(exc))
+        update_session(session_id, status="failed", error=str(exc), processing_step=None)
 
 
 @app.get("/health")
@@ -106,15 +127,27 @@ def get_session_route(session_id: str) -> SessionStatusResponse:
         status=rec.status,
         result=api_result,
         error=rec.error,
+        processing_step=rec.processing_step,
     )
 
 
 @app.patch("/sessions/{session_id}/changes/{change_id}", response_model=ChangePatchResponse)
 def patch_change(session_id: str, change_id: str, body: ChangePatchRequest) -> ChangePatchResponse:
-    rec = store_patch_change(session_id, change_id, body.status)
+    rec = store_patch_change(
+        session_id,
+        change_id,
+        status=body.status,
+        revised=body.revised,
+    )
+    if rec == "forbidden":
+        raise HTTPException(400, detail="修改内容含禁止表述，无法采纳")
     if rec is None:
         raise HTTPException(404, detail="会话、结果或修改项不存在")
-    return ChangePatchResponse(id=change_id, status=body.status)
+    if rec.export_path:
+        Path(rec.export_path).unlink(missing_ok=True)
+        update_session(session_id, export_path=None)
+    ch = next(c for c in rec.result.changes if c.id == change_id)
+    return ChangePatchResponse(id=change_id, status=ch.status)
 
 
 @app.post("/sessions/{session_id}/export", response_model=ExportResponse)
